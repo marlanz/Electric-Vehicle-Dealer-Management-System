@@ -60,8 +60,9 @@ const testDriveAppointments = [
   },
 ];
 
-const modelStock = [
+export const modelStock = [
   {
+    id: 1,
     model: "Tesla Model S",
     brand: "Tesla",
     stock: "57 kWh",
@@ -75,6 +76,7 @@ const modelStock = [
     img: "https://i.pinimg.com/1200x/d5/da/11/d5da11d9d023a866c2999c9c7c54b333.jpg",
   },
   {
+    id: 2,
     model: "Tesla Model S",
     brand: "Tesla",
     stock: "71 kWh",
@@ -88,6 +90,7 @@ const modelStock = [
     img: "https://i.pinimg.com/1200x/d5/da/11/d5da11d9d023a866c2999c9c7c54b333.jpg",
   },
   {
+    id: 3,
     model: "Tesla Model S",
     brand: "Tesla",
     stock: "75 kWh",
@@ -105,14 +108,19 @@ const modelStock = [
 const Home = () => {
   const { user } = useAppSelector(selectAuth);
   return (
-    <View style={{ backgroundColor: color.backgroundPrimary, flex: 1 }}>
-      <SafeAreaView className="px-4 pb-[72px]">
+    <View
+      style={{
+        backgroundColor: color.backgroundPrimary,
+        flex: 1,
+      }}
+    >
+      <SafeAreaView className="px-4 ">
         {/* Header */}
         <View className="flex-row justify-between items-center py-5">
           <View className="flex-row gap-3 items-center">
             <Image
               source={images.avt_placeholder}
-              className="size-[50px] rounded-full"
+              className="size-[40px] rounded-full"
               resizeMode="contain"
             />
             <View>
@@ -127,7 +135,10 @@ const Home = () => {
           <Ionicons name="log-out-outline" size={24} color={"white"} />
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 78 }}
+        >
           {/* Stats */}
           <Text className="mt-6 font-bold text-white text-xl mb-3">
             Dashboard Statistics
@@ -140,10 +151,10 @@ const Home = () => {
                 key={index}
                 className="bg-gray p-5 rounded-[10px] w-[48%] mb-4"
               >
-                <Text className="text-white text-2xl font-semibold">
+                <Text className="text-white text-3xl font-semibold">
                   {d.number}
                 </Text>
-                <Text className="font-medium text-base text-secondary mt-2">
+                <Text className="font-medium text-xl text-secondary mt-2">
                   {d.desc}
                 </Text>
 
@@ -172,9 +183,9 @@ const Home = () => {
                 key={index}
                 className="p-5 bg-gray rounded-[10px] w-full items-center justify-between flex-row"
               >
-                <View className="flex-col gap-4">
+                <View className="flex-col gap-3">
                   <View>
-                    <Text className="font-semibold text-xl text-white ">
+                    <Text className="font-semibold text-xl text-white mb-1">
                       {t.name}
                     </Text>
                     <View className="flex-row gap-2 items-center">

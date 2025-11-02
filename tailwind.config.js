@@ -19,6 +19,7 @@ module.exports = {
         green: {
           100: "#2A9083",
         },
+        blue: "#1173D4",
         error: "#F14141",
         success: "#2F9B65",
       },
