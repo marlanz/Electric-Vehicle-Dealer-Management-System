@@ -18,6 +18,7 @@ module.exports = {
         dark: "#0B1220",
         green: {
           100: "#2A9083",
+          200: "#16D68F",
         },
         blue: "#1173D4",
         error: "#F14141",

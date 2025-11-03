@@ -221,18 +221,18 @@ const CreateQuotation = () => {
                 <CustomPrice
                   title="Subtotal"
                   value={vehicleDetail.price}
-                  valueStyles="text-white"
+                  valueStyles="text-white text-lg"
                 />
                 <CustomPrice
                   title="Discount"
                   value={`- $2,000`}
-                  valueStyles="text-[#16D68F]"
+                  valueStyles="text-[#16D68F]  text-lg"
                 />
                 <CustomDivider />
                 <CustomPrice
                   title="Total Price"
                   value={`$ 52,990`}
-                  valueStyles="text-white"
+                  valueStyles="text-white  text-xl"
                   titleStyles="text-white font-semibold text-xl"
                 />
               </View>

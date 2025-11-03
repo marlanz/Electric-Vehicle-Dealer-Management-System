@@ -44,6 +44,15 @@ const Layout = () => {
           }}
         />
         <Tabs.Screen
+          name="appointments"
+          options={{
+            title: "Appointments",
+            tabBarIcon: ({ color, size }) => (
+              <Feather name="file-text" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
           name="quotations"
           options={{
             title: "Quotations",
