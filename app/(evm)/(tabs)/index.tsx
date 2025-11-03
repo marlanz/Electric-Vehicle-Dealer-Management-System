@@ -4,8 +4,9 @@ import { color, images } from "@/src/constants";
 import { selectAuth } from "@/src/features/auth/authSlice";
 import { useAppSelector } from "@/src/store";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React from "react";
-import { Image, ScrollView, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, Text, View } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -222,7 +223,8 @@ const Home = () => {
 
           <View className="flex-col gap-3">
             {modelStock.map((s, index) => (
-              <View
+              <Pressable
+                onPress={() => router.push(`/(vehicle)/${s.id}`)}
                 key={index}
                 className="flex-1 rounded-[15px] overflow-hidden bg-gray p-5"
               >
@@ -256,7 +258,7 @@ const Home = () => {
                     {s.discount}
                   </Text>
                 </View>
-              </View>
+              </Pressable>
             ))}
           </View>
         </ScrollView>
