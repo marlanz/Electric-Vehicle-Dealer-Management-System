@@ -25,7 +25,7 @@ const CustomPrice = ({
       >
         {title}
       </Text>
-      <Text className={cn("font-semibold text-xl ", valueStyles)}>{value}</Text>
+      <Text className={cn("font-semibold", valueStyles)}>{value}</Text>
     </View>
   );
 };
