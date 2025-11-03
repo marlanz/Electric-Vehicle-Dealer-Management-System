@@ -145,7 +145,7 @@ const VehicleDetail = () => {
               btnStyles="bg-[#61B1FF]/[0.15] "
               textStyles="text-blue"
               title="Book Test Drive"
-              onPress={() => {}}
+              onPress={() => router.push("/(testdrive)/create")}
             />
             <CustomButton
               btnStyles="border border-blue "

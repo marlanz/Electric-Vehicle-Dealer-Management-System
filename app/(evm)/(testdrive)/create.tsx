@@ -1,11 +1,10 @@
 import CustomButton from "@/src/components/ui/CustomButton";
-import CustomDivider from "@/src/components/ui/CustomDivider";
 import CustomModelSpecs from "@/src/components/ui/CustomModelSpecs";
-import CustomPrice from "@/src/components/ui/CustomPrice";
+import DateTimeInput from "@/src/components/ui/DateTimeInput ";
 import { color, images } from "@/src/constants";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -16,6 +15,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const vehicleDetail = {
@@ -37,7 +37,11 @@ const vehicleDetail = {
   desc: "Vinfast VF7 is a high-performance electric sedan with unparallel rage and exhilirating acceleration",
 };
 
-const CreateQuotation = () => {
+const CreateAppointment = () => {
+  const [date, setDate] = useState(new Date());
+  const [mode, setMode] = useState<"date" | "time">("date");
+  const [show, setShow] = useState(false);
+
   return (
     <SafeAreaView className="flex-1 px-4">
       <View className="flex-row justify-between py-5">
@@ -45,7 +49,7 @@ const CreateQuotation = () => {
           <Ionicons name="arrow-back-outline" size={24} color={"white"} />
         </Pressable>
         <Text className="text-2xl font-semibold text-white">
-          Create Quotation
+          Create Appointment
         </Text>
         <Pressable>
           <Ionicons name="heart-outline" size={24} color={"white"} />
@@ -56,10 +60,10 @@ const CreateQuotation = () => {
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         // style={{ flex: 1 }}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        // keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <ScrollView
-          contentContainerClassName=" gap-5 pb-6"
+          contentContainerClassName="gap-5 "
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: 78 }}
@@ -181,7 +185,7 @@ const CreateQuotation = () => {
               </View>
             </View>
           </View>
-          {/* Pricing */}
+          {/* Appointment details */}
           <View className="p-[15px] bg-gray rounded-[10px]">
             {/* Header */}
             <View className="flex-row justify-between mb-5">
@@ -192,49 +196,28 @@ const CreateQuotation = () => {
                   color={color.iconColor}
                 />
                 <Text className="font-semibold text-xl text-white">
-                  Pricing & Discounts
+                  Appointment Details
                 </Text>
               </View>
             </View>
             {/* Body */}
             <View className="gap-5">
-              <View className="flex-row gap-4">
-                <View className="gap-1 flex-1">
-                  <Text className="font-medium text-base text-secondary">
-                    On-Road Price
-                  </Text>
-                  <Text className="font-semibold text-white text-xl px-3 py-[14px] bg-dark rounded-[10px] border border-secondary">
-                    {vehicleDetail.price}
-                  </Text>
+              <DateTimeInput />
+              <View className="gap-2 flex-1">
+                <Text className="font-medium text-base text-secondary">
+                  Test Drive Location
+                </Text>
+                <View className="p-4  bg-dark rounded-[10px] border border-secondary flex-row justify-between items-center">
+                  <View className="gap-1">
+                    <Text className="font-semibold text-white text-lg">
+                      Showroom Vinfast Go Vap
+                    </Text>
+                    <Text className="font-medium text-secondary text-base">
+                      123 Nguyen Van Luong, P.11, Q.Go Vap
+                    </Text>
+                  </View>
+                  <Ionicons name="location-outline" size={24} color="white" />
                 </View>
-
-                <View className="gap-1 flex-1">
-                  <Text className="font-medium text-base text-secondary">
-                    Discount
-                  </Text>
-                  <Text className="font-semibold text-white text-xl px-3 py-[14px] bg-dark rounded-[10px] border border-secondary">
-                    {vehicleDetail.price}
-                  </Text>
-                </View>
-              </View>
-              <View className="p-[15px] bg-dark rounded-[10px] gap-4">
-                <CustomPrice
-                  title="Subtotal"
-                  value={vehicleDetail.price}
-                  valueStyles="text-white"
-                />
-                <CustomPrice
-                  title="Discount"
-                  value={`- $2,000`}
-                  valueStyles="text-[#16D68F]"
-                />
-                <CustomDivider />
-                <CustomPrice
-                  title="Total Price"
-                  value={`$ 52,990`}
-                  valueStyles="text-white"
-                  titleStyles="text-white font-semibold text-xl"
-                />
               </View>
             </View>
           </View>
@@ -289,4 +272,4 @@ const CreateQuotation = () => {
   );
 };
 
-export default CreateQuotation;
+export default CreateAppointment;
