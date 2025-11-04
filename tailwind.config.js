@@ -15,9 +15,10 @@ module.exports = {
       colors: {
         secondary: "#959CA7",
         gray: "#1C242D",
-
+        dark: "#0B1220",
         green: {
           100: "#2A9083",
+          200: "#16D68F",
         },
         blue: "#1173D4",
         error: "#F14141",

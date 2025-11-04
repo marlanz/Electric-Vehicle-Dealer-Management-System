@@ -76,7 +76,7 @@ const Vehicles = () => {
                 >
                   <Text
                     className={cn(
-                      "font-medium text-base",
+                      "font-semibold text-base",
                       isActive ? "text-white" : "text-secondary"
                     )}
                   >

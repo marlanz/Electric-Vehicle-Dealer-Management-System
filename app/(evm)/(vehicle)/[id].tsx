@@ -82,7 +82,7 @@ const VehicleDetail = () => {
           <View className="flex-row justify-between">
             <CustomStatCard
               title="Battery"
-              desc="Max range"
+              desc="Battery life"
               number={vehicleDetail.stock}
               icon={"battery-outline"}
             />
@@ -138,14 +138,14 @@ const VehicleDetail = () => {
             btnStyles="bg-blue"
             textStyles="text-white"
             title="Create Quotation"
-            onPress={() => {}}
+            onPress={() => router.push("/(quotation)/create")}
           />
           <View className="flex-row gap-3 mt-4">
             <CustomButton
               btnStyles="bg-[#61B1FF]/[0.15] "
               textStyles="text-blue"
               title="Book Test Drive"
-              onPress={() => {}}
+              onPress={() => router.push("/(testdrive)/create")}
             />
             <CustomButton
               btnStyles="border border-blue "
