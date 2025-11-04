@@ -58,7 +58,7 @@ export default function VehicleCard({ v }: { v: Vehicle }) {
   const year = v.year;
 
   const goDetail = () =>
-    router.push({ pathname: "/(dealer)/(vehicles)/[id]", params: { id: v.id } });
+    router.push({ pathname: "/(dealer)/(vehicles)/[id]", params: { id: v.vehicle_id } });
 
   return (
     <Pressable onPress={goDetail}>

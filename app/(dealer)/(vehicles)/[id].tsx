@@ -1,9 +1,10 @@
+// app/vehicles/[id].tsx (hoặc file VehicleDetailScreen bạn đang dùng)
 import { selectAuth } from "@/src/features/auth/authSlice";
-import { addTempVehicle } from "@/src/features/selections/tempSelectionsSlice";
+import { addTempVehicle, removeTempVehicle, selectTempVehicles } from "@/src/features/selections/tempSelectionsSlice";
 import { useAppDispatch, useAppSelector } from "@/src/store";
 import { Feather, MaterialCommunityIcons as MCI } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { router, Stack, useLocalSearchParams, type Href } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import ImageViewing from "react-native-image-viewing";
@@ -11,7 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 type Spec = { id: string; spec_name: string; spec_value: string };
 type VehicleDetail = {
-  id: string;
+  vehicle_id: string;
   model: string;
   version?: string | null;
   color?: string | null;
@@ -25,20 +26,55 @@ type VehicleDetail = {
   specs?: Spec[] | null;
 };
 
-function currencyVND(v?: string | number | null) {
+function currencyVND(v?: any) {
   if (v == null) return "—";
+  if (typeof v === "object") return fmt(v); // phòng msrp trả object (hiếm)
   const n = typeof v === "string" ? Number(v) : v;
   if (!Number.isFinite(n)) return String(v);
   return new Intl.NumberFormat("vi-VN").format(n) + "₫";
 }
-
-export default function VehicleDetailScreen() {
+  function fmt(v: any): string {
+    if (v == null) return "—";
+    if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") return String(v);
+    if (Array.isArray(v)) return v.map(fmt).join(", ");
+    // object -> "key: val • key2: val2"
+    try {
+      return Object.entries(v)
+        .map(([k, val]) => `${k}: ${fmt(val)}`)
+        .join(" • ");
+    } catch {
+      return String(v);
+    }
+  }
+  function fmtMotor(m: any): string {
+    if (!m) return "—";
+    if (typeof m !== "object") return fmt(m);
+    const parts: string[] = [];
+    if (m.power != null)  parts.push(`${m.power} kW`);
+    if (m.torque != null) parts.push(`${m.torque} Nm`);
+    if (m.type)          parts.push(String(m.type));
+    return parts.length ? parts.join(" • ") : fmt(m);
+  }
+  function fmtBattery(b: any): string {
+    if (!b) return "—";
+    if (typeof b !== "object") return fmt(b);
+    const parts: string[] = [];
+    if (b.capacity_kwh != null) parts.push(`${b.capacity_kwh} kWh`);
+    if (b.range_km != null)     parts.push(`${b.range_km} km`);
+    if (b.type)                 parts.push(String(b.type));
+    return parts.length ? parts.join(" • ") : fmt(b);
+  }
+  export default function VehicleDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { token } = useAppSelector(selectAuth);
+  const tempVehicles = useAppSelector(selectTempVehicles);
   const dispatch = useAppDispatch();
   const [data, setData] = useState<VehicleDetail | null>(null);
+  console.log("VehicleDetailScreen data:", data);
   const [loading, setLoading] = useState(true);
   const [viewer, setViewer] = useState<{ visible: boolean; index: number }>({ visible: false, index: 0 });
+
+  const inTemp = !!tempVehicles.find(v => v.id === id);
 
   const fetchDetail = useCallback(async () => {
     try {
@@ -62,9 +98,7 @@ export default function VehicleDetailScreen() {
     }
   }, [id, token]);
 
-  useEffect(() => {
-    fetchDetail();
-  }, [fetchDetail]);
+  useEffect(() => { fetchDetail(); }, [fetchDetail]);
 
   const images = useMemo(() => {
     const arr = [
@@ -97,36 +131,56 @@ export default function VehicleDetailScreen() {
       </View>
     );
   }
-  const normalizedStatus: "ACTIVE" | "INACTIVE" =
-  data.status === "ACTIVE" ? "ACTIVE" : "INACTIVE";
+
   const title = `${data.model}${data.version ? " " + data.version : ""}`;
+
+  const toggleTempVehicle = () => {
+    if (!data) return;
+    if (inTemp) {
+      dispatch(removeTempVehicle(data.vehicle_id));
+    } else {
+      dispatch(addTempVehicle({
+        id: data.vehicle_id,
+        model: data.model,
+        version: data.version ?? null,
+        color: data.color ?? null,
+      }));
+    }
+  };
 
   return (
     <View className="flex-1 bg-[#0B1220]">
-      {/* Ẩn header mặc định, dùng header custom bên dưới */}
       <Stack.Screen options={{ headerShown: false }} />
-
-      {/* Header custom (back + title + price nhỏ) */}
+      {/* Header custom: Back + Title + (+) add-to-temp / remove */}
       <SafeAreaView edges={["top"]} style={{ backgroundColor: "#0B1220" }}>
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} hitSlop={8} style={styles.headerIconBtn}>
             <Feather name="arrow-left" size={18} color="#E7EEF7" />
           </Pressable>
+
           <View style={{ flex: 1, marginHorizontal: 8 }}>
             <Text numberOfLines={1} style={styles.headerTitle}>{title}</Text>
-            {!!data.msrp && (
-              <Text numberOfLines={1} style={styles.headerSub}>From {currencyVND(data.msrp)}</Text>
-            )}
+            {!!data.msrp && <Text numberOfLines={1} style={styles.headerSub}>From {currencyVND(data.msrp)}</Text>}
           </View>
-          <Pressable onPress={() => {}} hitSlop={8} style={styles.headerIconBtn}>
-            <Feather name="share-2" size={18} color="#E7EEF7" />
+
+          <Pressable
+            onPress={toggleTempVehicle}
+            hitSlop={8}
+            style={[
+              styles.headerIconBtn,
+              inTemp
+                ? { backgroundColor: "#065f46", borderColor: "rgba(255,255,255,0.12)" } // xanh rêu: đang có trong Temp
+                : { backgroundColor: "#1e3a8a", borderColor: "rgba(255,255,255,0.12)" }, // xanh dương: thêm vào Temp
+            ]}
+          >
+            <Feather name={inTemp ? "check" : "plus"} size={18} color="#E7EEF7" />
           </Pressable>
         </View>
       </SafeAreaView>
 
       {/* Nội dung */}
-      <ScrollView contentContainerStyle={{ paddingBottom: 96 /* chừa chỗ cho bottom bar */ }}>
-        {/* Gallery lớn + thumbnails */}
+      <ScrollView contentContainerStyle={{ paddingBottom: 96 }}>
+        {/* Gallery */}
         <View style={{ borderRadius: 24, overflow: "hidden" }} className="m-4">
           <Image
             source={{ uri: images[0] || "https://tse1.mm.bing.net/th/id/OIP.BNr7COrS5-hwntskpdYHpQHaEK?rs=1&pid=ImgDetMain&o=7&rm=3" }}
@@ -158,15 +212,13 @@ export default function VehicleDetailScreen() {
           presentationStyle="fullScreen"
         />
 
-        {/* Thông tin chi tiết */}
+        {/* Detail */}
         <View className="px-5">
           <Text className="text-white text-[22px] font-extrabold" numberOfLines={2}>{title}</Text>
 
           <View className="flex-row items-center gap-2 mt-2">
             <Feather name="tag" size={16} color="#E8EEF7" />
-            <Text className="text-white text-[18px] font-bold">
-              {currencyVND(data.msrp)}
-            </Text>
+            <Text className="text-white text-[18px] font-bold">{currencyVND(data.msrp)}</Text>
           </View>
 
           {/* Color • Year • Status */}
@@ -187,21 +239,37 @@ export default function VehicleDetailScreen() {
             </View>
           </View>
 
-          {/* Specs nhanh */}
+          {/* Quick specs */}
           <View className="mt-14 mb-3">
             <Text className="text-white/80 font-semibold mb-2">Quick specs</Text>
             <View className="flex-row flex-wrap gap-x-6 gap-y-8">
               {!!data.features?.motor && (
-                <SpecItem icon={<Feather name="zap" size={18} color="#9FB3C8" />} label="Motor" value={data.features.motor} />
+                <SpecItem
+                  icon={<Feather name="zap" size={18} color="#9FB3C8" />}
+                  label="Motor"
+                  value={fmtMotor(data.features.motor)}
+                />
               )}
               {data.features?.seats != null && (
-                <SpecItem icon={<Feather name="users" size={18} color="#9FB3C8" />} label="Seats" value={String(data.features.seats)} />
+                <SpecItem
+                  icon={<Feather name="users" size={18} color="#9FB3C8" />}
+                  label="Seats"
+                  value={String(data.features.seats)}
+                />
               )}
-              {/* {!!data.features?.drivetrain && (<View></View>
-                // <SpecItem icon={<MCI name="all-wheel-drive" size={18} color="#9FB3C8" />} label="Drivetrain" value={data.features.drivetrain} />
-              )} */}
               {!!data.features?.battery && (
-                <SpecItem icon={<MCI name="battery-high" size={18} color="#9FB3C8" />} label="Battery" value={data.features.battery} />
+                <SpecItem
+                  icon={<MCI name="battery-high" size={18} color="#9FB3C8" />}
+                  label="Battery"
+                  value={fmtBattery(data.features.battery)}
+                />
+              )}
+              {!!data.features?.drivetrain && (
+                <SpecItem
+                  icon={<Feather name="settings" size={18} color="#9FB3C8" />}
+                  label="Drivetrain"
+                  value={fmt(data.features.drivetrain)}
+                />
               )}
             </View>
           </View>
@@ -217,8 +285,10 @@ export default function VehicleDetailScreen() {
                     className="flex-row items-center justify-between px-4 py-3"
                     style={{ backgroundColor: i % 2 ? "rgba(255,255,255,0.02)" : "transparent" }}
                   >
-                    <Text className="text-white/80">{s.spec_name}</Text>
-                    <Text className="text-white font-medium">{s.spec_value}</Text>
+                    <Text className="text-white/80">{fmt(s.spec_name)}</Text>
+                    <Text className="text-white font-medium" numberOfLines={1}>
+                      {fmt(s.spec_value)}
+                    </Text>
                   </View>
                 ))}
               </View>
@@ -235,68 +305,55 @@ export default function VehicleDetailScreen() {
         </View>
       </ScrollView>
 
-      {/* Bottom Action Bar */}
-        <SafeAreaView edges={["bottom"]} style={styles.bottomWrap}>
+      {/* Bottom Action Bar (đã BỎ nút Add-to-Temp). Hai nút này là nền đặc, rõ ràng */}
+      <SafeAreaView edges={["bottom"]} style={styles.bottomWrap}>
         <View style={styles.bottomBar}>
-            <Pressable
-            onPress={() => router.push("/testdrives" as const)}
-            style={({ pressed }) => [styles.btnOutline, pressed && { opacity: 0.85 }]}
-            >
-            <Feather name="navigation-2" size={16} color="#9EC5FE" />
-            <Text style={styles.btnOutlineText}>Book Test Drive</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                if (data) {
-                  // map data vào type Vehicle đã dùng trong FE của bạn
-                  dispatch(addTempVehicle({
-                    id: data.id,
-                    model: data.model,
-                    version: data.version ?? null,
-                    color: data.color ?? null,
-                    // msrp: String(data.msrp ?? ""),
-                    // features: data.features ?? null,
-                    // status: normalizedStatus,
-                    // year: data.year ?? null,
-                    // description: data.description ?? null,
-                    // image_url: data.image_url ?? null,
-                    // gallery: data.gallery ?? null,
-                    // wholesale_price: null as any,
-                  }));
-                }
-              }}
-              className="px-4 py-2 rounded-xl bg-emerald-600/90"
-            >
-              <Text className="text-white font-semibold">+ Add to Temp</Text>
-            </Pressable>
-            <View style={{ width: 10 }} />
+          <Pressable
+            onPress={() => data?.vehicle_id && router.push({ pathname: "/(dealer)/testdrives/create", params: { vehicleId: data.vehicle_id } })}
+            style={({ pressed }) => [styles.btnSecondary, pressed && { opacity: 0.9 }]}
+          >
+            <Feather name="navigation-2" size={16} color="#fff" />
+            <Text style={styles.btnSecondaryText}>Book Test Drive</Text>
+          </Pressable>
 
-            <Pressable
+          <Pressable
             onPress={() => router.push("/quotations" as const)}
             style={({ pressed }) => [styles.btnPrimary, pressed && { opacity: 0.95 }]}
-            >
+          >
             <Feather name="file-plus" size={16} color="#fff" />
             <Text style={styles.btnPrimaryText}>Create Quotation</Text>
-            </Pressable>
+          </Pressable>
         </View>
-        </SafeAreaView>
+      </SafeAreaView>
     </View>
   );
 }
 
-function SpecItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function SpecItem({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode; // <- đổi sang ReactNode
+}) {
   return (
     <View className="w-[46%]">
       <View className="flex-row items-center gap-2">
         {icon}
         <Text className="text-white/70">{label}</Text>
       </View>
-      <Text className="text-white font-semibold mt-1">{value}</Text>
+      {/* value giờ có thể là string/number/ReactNode đã format */}
+      <Text className="text-white font-semibold mt-1">{value as any}</Text>
     </View>
   );
 }
-const BLUE = "#2B61D1";
-const BG   = "#0B1220";
+
+const BLUE = "#2563eb";      // xanh sáng hơn
+const INDIGO = "#3b82f6";    // nút phụ
+const BG = "#0B1220";
+
 const styles = StyleSheet.create({
   header: {
     height: 56,
@@ -304,7 +361,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "#0B1220",
+    backgroundColor: BG,
   },
   headerIconBtn: {
     padding: 10,
@@ -315,9 +372,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: { color: "white", fontWeight: "700", fontSize: 16 },
   headerSub: { color: "rgba(255,255,255,0.6)", fontSize: 12 },
-  bottomWrap: {
-    backgroundColor: BG
-  },
+
+  bottomWrap: { backgroundColor: BG },
   bottomBar: {
     paddingHorizontal: 16,
     paddingTop: 8,
@@ -325,41 +381,67 @@ const styles = StyleSheet.create({
     backgroundColor: BG,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-start",   
+    justifyContent: "flex-start",
+    gap: 12,
   },
-
-  btnOutline: {
-    paddingHorizontal: 14,
-    height: 40,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: BLUE,
-    backgroundColor: BG,
+  btnSecondary: {
+    paddingHorizontal: 16,
+    height: 48,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
+    backgroundColor: INDIGO,             // << đổi từ xanh rất đậm sang xanh rõ ràng
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    alignSelf: "flex-start",        
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
-  btnOutlineText: {
-    color: "#E6F0FF",               
+  btnSecondaryText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 14,
+    letterSpacing: 0.2,
+  },
+  // solid outline-like button (nền xanh đậm, border nhạt, chữ trắng)
+  btnOutlineSolid: {
+    paddingHorizontal: 14,
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.15)",
+    backgroundColor: "#1f3d8b",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  btnOutlineSolidText: {
+    color: "#fff",
     fontWeight: "700",
     fontSize: 13,
   },
 
-  btnPrimary: {
-    paddingHorizontal: 14,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: BLUE,
+   btnPrimary: {
+    paddingHorizontal: 16,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: BLUE,               // << sáng, nổi bật
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    alignSelf: "flex-start",
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
   btnPrimaryText: {
-    
-    color: "#12312",
+    color: "#fff",
     fontWeight: "700",
-    fontSize: 13,
+    fontSize: 14,
+    letterSpacing: 0.2,
   },
 });

@@ -1,5 +1,5 @@
 export type Vehicle = {
-  id: string;
+  vehicle_id: string;
   model: string;
   version: string | null;
   color: string | null;
