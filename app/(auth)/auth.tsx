@@ -5,6 +5,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { router } from "expo-router";
 import React, { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { ToastAndroid } from "react-native";
 import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from "react-native";
 import * as yup from "yup";
 
@@ -91,6 +92,7 @@ export default function AuthUnifiedScreen() {
       router.replace("/");
     } catch (err: any) {
       console.warn("Auth error:", err?.message ?? err);
+      ToastAndroid.show(`Error: ${err?.message ?? err}`, ToastAndroid.LONG);
     }
   };
 

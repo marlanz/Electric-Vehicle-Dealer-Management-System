@@ -9,8 +9,11 @@ import {
   View,
   KeyboardAvoidingView,
   Platform,
+  StyleSheet,
 } from "react-native";
-import { Stack, router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
+import { Feather } from "@expo/vector-icons";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useForm, Controller } from "react-hook-form";
 import { useAppDispatch, useAppSelector } from "@/src/store";
 import {
@@ -21,7 +24,8 @@ import {
   updateDMStaff,
 } from "@/src/features/dealerManager/staffs/staffSlice";
 import type { UpdateStaffBody } from "@/src/features/dealerManager/staffs/types";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+
+const BG = "#0B1220";
 
 export default function DM_StaffDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -31,13 +35,11 @@ export default function DM_StaffDetail() {
   const insets = useSafeAreaInsets();
 
   const [editing, setEditing] = useState(false);
-
   const {
     control,
     handleSubmit,
     reset,
-    formState: { isSubmitting, isDirty, dirtyFields },
-    watch,
+    formState: { isSubmitting, isDirty, dirtyFields, errors },
   } = useForm<UpdateStaffBody>({
     defaultValues: { full_name: "", email: "", status: "ACTIVE" },
     mode: "onChange",
@@ -45,7 +47,7 @@ export default function DM_StaffDetail() {
 
   useEffect(() => {
     if (id) dispatch(fetchDMStaffById({ id: String(id) }));
-  }, [id]);
+  }, [id, dispatch]);
 
   useEffect(() => {
     if (detail) {
@@ -58,7 +60,9 @@ export default function DM_StaffDetail() {
         { keepDirty: false }
       );
     }
-  }, [detail]);
+  }, [detail, reset]);
+
+  const title = detail?.full_name ?? "Staff Detail";
 
   const startEdit = () => setEditing(true);
   const cancelEdit = () => {
@@ -76,66 +80,75 @@ export default function DM_StaffDetail() {
 
   const onConfirm = async (data: UpdateStaffBody) => {
     const body: UpdateStaffBody = {};
-    if (dirtyFields.full_name) body.full_name = data.full_name;
-    if (dirtyFields.email) body.email = data.email;
+    if (dirtyFields.full_name) body.full_name = data.full_name?.trim();
+    if (dirtyFields.email) body.email = data.email?.trim();
     if (dirtyFields.status) body.status = data.status;
+
     if (!Object.keys(body).length) return setEditing(false);
 
     try {
       await dispatch(updateDMStaff({ id: String(id), body })).unwrap();
       setEditing(false);
     } catch (e: any) {
-      Alert.alert("Lỗi", e?.message ?? "Cập nhật thất bại");
+      Alert.alert("Error", e?.message ?? "Update failed");
     }
   };
 
   const onDelete = () => {
-    Alert.alert("Xoá staff", "Bạn chắc chắn muốn xoá staff này?", [
-      { text: "Huỷ" },
+    Alert.alert("Delete staff", "Are you sure you want to delete this staff?", [
+      { text: "Cancel" },
       {
-        text: "Xoá",
+        text: "Delete",
         style: "destructive",
         onPress: async () => {
           try {
             await dispatch(deleteDMStaff({ id: String(id) })).unwrap();
             router.replace("/(dealer-manager)/(tabs)");
           } catch (e: any) {
-            Alert.alert("Lỗi", e?.message ?? "Xoá thất bại");
+            Alert.alert("Error", e?.message ?? "Delete failed");
           }
         },
       },
     ]);
   };
 
- const HeaderRight = useMemo(() => {
-  if (!editing) {
-    return () => (
-      <View className="flex-row gap-2">
-        <Pressable onPress={onDelete} className="px-3 py-2 rounded-xl bg-red-600">
-          <Text className="text-white font-semibold">Delete</Text>
-        </Pressable>
-        <Pressable onPress={startEdit} className="px-3 py-2 rounded-xl bg-blue-600">
-          <Text className="text-white font-semibold">Edit</Text>
-        </Pressable>
-      </View>
-    );
-  }
-  // 👇 edit mode: thêm Delete ngay trên header
-  return () => (
-    <View className="flex-row gap-2">
-      <Pressable onPress={onDelete} className="px-3 py-2 rounded-xl bg-red-600">
-        <Text className="text-white font-semibold">Delete</Text>
-      </Pressable>
-      <Pressable onPress={cancelEdit} className="px-3 py-2 rounded-xl bg-white/10 border border-white/20">
-        <Text className="text-white font-semibold">Cancel</Text>
-      </Pressable>
-    </View>
-  );
-}, [editing]);
-
   return (
-    <SafeAreaView edges={["top"]} className="flex-1 bg-[#0B1220]">
-      <Stack.Screen options={{ title: detail?.full_name ?? "Staff Detail", headerRight: HeaderRight }} />
+    <View className="flex-1" style={{ backgroundColor: BG }}>
+      {/* Header đồng bộ: back + title + action (Edit/Delete hoặc Save/Cancel) */}
+      <SafeAreaView edges={["top"]} style={{ backgroundColor: BG }}>
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()} hitSlop={8} style={styles.headerIconBtn}>
+            <Feather name="arrow-left" size={18} color="#E7EEF7" />
+          </Pressable>
+
+          <View style={{ flex: 1, marginHorizontal: 8 }}>
+            <Text numberOfLines={1} style={styles.headerTitle}>{title}</Text>
+            <Text numberOfLines={1} style={styles.headerSub}>
+              {editing ? "Editing staff profile" : "Staff profile & metadata"}
+            </Text>
+          </View>
+
+          {!editing ? (
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <Pressable onPress={onDelete} hitSlop={8} style={[styles.headerIconBtn, { borderColor: "rgba(255,0,0,0.25)" }]}>
+                <Feather name="trash-2" size={18} color="#FCA5A5" />
+              </Pressable>
+              <Pressable onPress={startEdit} hitSlop={8} style={[styles.headerIconBtn, { backgroundColor: "#1e3a8a", borderColor: "rgba(255,255,255,0.12)" }]}>
+                <Feather name="edit-3" size={18} color="#E7EEF7" />
+              </Pressable>
+            </View>
+          ) : (
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <Pressable disabled={isSubmitting} onPress={handleSubmit(onConfirm)} hitSlop={8} style={[styles.headerIconBtn, { backgroundColor: "#166534", borderColor: "rgba(255,255,255,0.12)" }]}>
+                {isSubmitting ? <ActivityIndicator color="#E7EEF7" /> : <Feather name="save" size={18} color="#E7EEF7" />}
+              </Pressable>
+              <Pressable disabled={isSubmitting} onPress={cancelEdit} hitSlop={8} style={styles.headerIconBtn}>
+                <Feather name="x" size={18} color="#E7EEF7" />
+              </Pressable>
+            </View>
+          )}
+        </View>
+      </SafeAreaView>
 
       {loading && !detail ? (
         <View className="flex-1 items-center justify-center">
@@ -144,181 +157,120 @@ export default function DM_StaffDetail() {
         </View>
       ) : !detail ? (
         <View className="flex-1 items-center justify-center">
-          <Text className="text-white/70">Không tìm thấy staff</Text>
+          <Text className="text-white/70">Staff not found</Text>
         </View>
       ) : (
-        <KeyboardAvoidingView
-          behavior={Platform.select({ ios: "padding", android: undefined })}
-          className="flex-1"
-        >
+        <KeyboardAvoidingView behavior={Platform.select({ ios: "padding", android: undefined })} className="flex-1">
           <ScrollView
             contentContainerStyle={{
-              paddingTop: 12, // đã có SafeArea top, chỉ thêm khoảng thở
-              paddingBottom: 120, // chừa chỗ cho footer nổi
+              paddingTop: 12,
+              paddingBottom: 24,
               paddingHorizontal: 16,
               gap: 16,
             }}
             keyboardShouldPersistTaps="handled"
           >
             {/* Card: Profile */}
-            <View className="rounded-2xl bg-white/5 border border-white/10 p-14px">
-              <Field
-                label="Full name"
-                editable={editing}
+            <View className="rounded-2xl bg-white/5 border border-white/10 p-4">
+              {/* Full name (required when editing) */}
+              <Controller
+                control={control}
                 name="full_name"
-                control={control}
-                placeholder="Họ tên"
+                rules={editing ? { required: "Full name is required" } : undefined}
+                render={({ field: { value, onChange } }) => (
+                  <View>
+                    <Text className="text-white/70 text-xs mb-1">Full name</Text>
+                    <TextInput
+                      editable={editing}
+                      value={value || ""}
+                      onChangeText={onChange}
+                      placeholder="Full name"
+                      placeholderTextColor="#9aa4b2"
+                      className={`px-4 py-3 rounded-2xl border ${
+                        editing ? "bg-white/10 border-white/10 text-white" : "bg-white/5 border-transparent text-white/80"
+                      }`}
+                    />
+                    {errors.full_name && <Text className="text-red-400 mt-1">{errors.full_name.message}</Text>}
+                  </View>
+                )}
               />
+
               <View className="h-3" />
-              <Field
-                label="Email"
-                editable={editing}
+
+              {/* Email (required + pattern khi editing) */}
+              <Controller
+                control={control}
                 name="email"
-                control={control}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                placeholder="staff@dealer.vn"
+                rules={
+                  editing
+                    ? {
+                        required: "Email is required",
+                        pattern: { value: /\S+@\S+\.\S+/, message: "Invalid email" },
+                      }
+                    : undefined
+                }
+                render={({ field: { value, onChange } }) => (
+                  <View>
+                    <Text className="text-white/70 text-xs mb-1">Email</Text>
+                    <TextInput
+                      editable={editing}
+                      value={value || ""}
+                      onChangeText={onChange}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      placeholder="staff@dealer.vn"
+                      placeholderTextColor="#9aa4b2"
+                      className={`px-4 py-3 rounded-2xl border ${
+                        editing ? "bg-white/10 border-white/10 text-white" : "bg-white/5 border-transparent text-white/80"
+                      }`}
+                    />
+                    {errors.email && <Text className="text-red-400 mt-1">{errors.email.message}</Text>}
+                  </View>
+                )}
               />
+
               <View className="h-3" />
-              <StatusField
-                label="Status"
-                editable={editing}
+
+              {/* Status (pills) */}
+              <Controller
                 control={control}
                 name="status"
+                render={({ field: { value, onChange } }) => (
+                  <View>
+                    <Text className="text-white/70 text-xs mb-1">Status</Text>
+                    <View className="flex-row gap-2">
+                      {(["ACTIVE", "INACTIVE"] as const).map((s) => {
+                        const active = value === s;
+                        return (
+                          <Pressable
+                            key={s}
+                            disabled={!editing}
+                            onPress={() => onChange(s)}
+                            className={`px-3 py-2 rounded-xl border ${
+                              active ? "bg-white/10 border-white" : "bg-white/5 border-white/20"
+                            } ${editing ? "" : "opacity-60"}`}
+                          >
+                            <Text className="text-white">{s}</Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </View>
+                )}
               />
             </View>
 
             {/* Card: Info */}
-            <View className="rounded-2xl bg-white/5 border border-white/10 p-14px">
+            <View className="rounded-2xl bg-white/5 border border-white/10 p-4">
               <InfoRow label="Role" value={detail.role} />
               <InfoRow label="Dealer ID" value={detail.dealer_id} />
               <InfoRow label="Created" value={new Date(detail.created_at).toLocaleString()} />
               <InfoRow label="Updated" value={new Date(detail.updated_at).toLocaleString()} />
             </View>
           </ScrollView>
-
-          {/* Floating footer actions */}
-          {!editing && (
-  <Pressable
-    onPress={startEdit}
-    className="absolute right-4"
-    style={{ bottom: insets.bottom + 16 }}
-  >
-    {editing && (
-  <View
-    style={{ paddingBottom: insets.bottom + 12 }}
-    className="absolute left-0 right-0 bottom-0 bg-[#0B1220]/95 border-t border-white/10 px-4 pt-10px"
-  >
-    <View className="flex-row gap-10px">
-      {/* Delete luôn hiện trong edit mode */}
-      <Pressable
-        onPress={onDelete}
-        className="flex-1 h-12 items-center justify-center rounded-2xl bg-red-600"
-      >
-        <Text className="text-white font-semibold">Delete</Text>
-      </Pressable>
-
-      {/* Cancel luôn hiện */}
-      <Pressable
-        onPress={cancelEdit}
-        className="flex-1 h-12 items-center justify-center rounded-2xl bg-white/10 border border-white/20"
-      >
-        <Text className="text-white font-semibold">Cancel</Text>
-      </Pressable>
-
-      {/* Confirm chỉ xuất hiện khi có thay đổi */}
-      {isDirty ? (
-        <Pressable
-          disabled={isSubmitting}
-          onPress={handleSubmit(onConfirm)}
-          className="flex-1 h-12 items-center justify-center rounded-2xl bg-emerald-600 disabled:opacity-60"
-        >
-          {isSubmitting ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text className="text-white font-semibold">Confirm</Text>
-          )}
-        </Pressable>
-      ) : (
-        <View className="flex-1 h-12 rounded-2xl opacity-0" />
-      )}
-    </View>
-  </View>
-)}
-  </Pressable>
-)}
         </KeyboardAvoidingView>
       )}
-    </SafeAreaView>
-  );
-}
-
-/* ---------- Small UI pieces ---------- */
-
-function Field(props: any) {
-  const { label, editable, control, name, ...rest } = props;
-  return (
-    <Controller
-      control={control}
-      name={name}
-      render={({ field: { value, onChange } }) => (
-        <View>
-          <Text className="text-white/70 text-xs mb-1">{label}</Text>
-          <TextInput
-            editable={editable}
-            value={value || ""}
-            onChangeText={onChange}
-            placeholderTextColor="#9aa4b2"
-            className={`px-4 py-3 rounded-2xl border ${
-              editable
-                ? "bg-white/5 border-white/10 text-white"
-                : "bg-white/5 border-transparent text-white/80"
-            }`}
-            {...rest}
-          />
-        </View>
-      )}
-    />
-  );
-}
-
-function StatusField({
-  label,
-  editable,
-  control,
-  name,
-}: {
-  label: string;
-  editable: boolean;
-  control: any;
-  name: "status";
-}) {
-  return (
-    <Controller
-      control={control}
-      name={name}
-      render={({ field: { value, onChange } }) => (
-        <View>
-          <Text className="text-white/70 text-xs mb-1">{label}</Text>
-          <View className="flex-row gap-2">
-            {(["ACTIVE", "INACTIVE"] as const).map((s) => {
-              const active = value === s;
-              return (
-                <Pressable
-                  key={s}
-                  onPress={() => editable && onChange(s)}
-                  className={`px-3 py-2 rounded-xl border ${
-                    active ? "border-white bg-white/10" : "border-white/20 bg-white/5"
-                  } ${editable ? "" : "opacity-60"}`}
-                >
-                  <Text className="text-white">{s}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-      )}
-    />
+    </View>
   );
 }
 
@@ -331,35 +283,22 @@ function InfoRow({ label, value }: { label: string; value?: string }) {
   );
 }
 
-function ConfirmButton({
-  visible,
-  loading,
-  onPress,
-}: {
-  visible: boolean;
-  loading: boolean;
-  onPress: () => void;
-}) {
-  if (!visible) {
-    // nút Confirm ẩn → để hàng nút đều nhau
-    return (
-      <View className="flex-1 h-12 rounded-2xl bg-white/10 opacity-0" />
-    );
-  }
-  return (
-    <Pressable
-      disabled={loading}
-      onPress={onPress}
-      className="flex-1 h-12 items-center justify-center rounded-2xl bg-emerald-600 disabled:opacity-60"
-    >
-      {loading ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-semibold">Confirm</Text>}
-    </Pressable>
-  );
-}
-
-/* tiny utility class that NativeWind accepts (14px, 10px) */
-declare module "react-native" {
-  interface ViewProps {
-    className?: string;
-  }
-}
+const styles = StyleSheet.create({
+  header: {
+    height: 56,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: BG,
+  },
+  headerIconBtn: {
+    padding: 10,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+  headerTitle: { color: "white", fontWeight: "700", fontSize: 16 },
+  headerSub: { color: "rgba(255,255,255,0.6)", fontSize: 12 },
+});
