@@ -1,3 +1,4 @@
+// app/(evm)/(tabs)/_layout.tsx
 import { Feather } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";

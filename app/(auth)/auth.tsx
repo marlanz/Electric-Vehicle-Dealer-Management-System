@@ -1,12 +1,12 @@
-import React, { useMemo, useState } from "react";
-import { View, Text, Pressable, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Image } from "react-native";
-import { useForm, Controller } from "react-hook-form";
-import * as yup from "yup";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useAppDispatch, useAppSelector } from "@/src/store";
 import { login, persistAuth, selectAuth } from "@/src/features/auth/authSlice";
-import { router } from "expo-router";
 import { http } from "@/src/services/http";
+import { useAppDispatch, useAppSelector } from "@/src/store";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { router } from "expo-router";
+import React, { useMemo, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from "react-native";
+import * as yup from "yup";
 
 // atoms
 const FieldLabel = ({ children }: { children: React.ReactNode }) => (
@@ -78,15 +78,16 @@ export default function AuthUnifiedScreen() {
         const res = await dispatch(login({ email: values.email, password: values.password })).unwrap();
         console.log('đăng nhập nè')
         await persistAuth(res);
-      } else {
-        await http.post("/auth/register", {
-          fullName: values.fullName,
-          email: values.email,
-          password: values.password,
-        });
-        const res = await dispatch(login({ email: values.email, password: values.password })).unwrap();
-        await persistAuth(res);
-      }
+      } 
+      // else {
+      //   await http.post("/auth/register", {
+      //     fullName: values.fullName,
+      //     email: values.email,
+      //     password: values.password,
+      //   });
+      //   const res = await dispatch(login({ email: values.email, password: values.password })).unwrap();
+      //   await persistAuth(res);
+      // }
       router.replace("/");
     } catch (err: any) {
       console.warn("Auth error:", err?.message ?? err);
@@ -176,7 +177,7 @@ export default function AuthUnifiedScreen() {
             <View className="h-4" />
             <PrimaryButton title={loading ? "Please wait..." : cta} onPress={handleSubmit(onSubmit)} disabled={loading} />
             <View className="h-3" />
-            <GhostButton title={isLogin ? "Create a new account" : "I already have an account"} onPress={() => setMode(isLogin ? "register" : "login")} />
+            {/* <GhostButton title={isLogin ? "Create a new account" : "I already have an account"} onPress={() => setMode(isLogin ? "register" : "login")} /> */}
 
             {loading && (
               <View className="mt-4 items-center">

@@ -1,5 +1,6 @@
 import { selectAuth } from "@/src/features/auth/authSlice";
-import { useAppSelector } from "@/src/store";
+import { addTempVehicle } from "@/src/features/selections/tempSelectionsSlice";
+import { useAppDispatch, useAppSelector } from "@/src/store";
 import { Feather, MaterialCommunityIcons as MCI } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { router, Stack, useLocalSearchParams, type Href } from "expo-router";
@@ -34,7 +35,7 @@ function currencyVND(v?: string | number | null) {
 export default function VehicleDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { token } = useAppSelector(selectAuth);
-
+  const dispatch = useAppDispatch();
   const [data, setData] = useState<VehicleDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [viewer, setViewer] = useState<{ visible: boolean; index: number }>({ visible: false, index: 0 });
@@ -89,14 +90,15 @@ export default function VehicleDetailScreen() {
     return (
       <View className="flex-1 items-center justify-center bg-[#0B1220] p-6">
         <Text className="text-white font-semibold mb-2">Vehicle not found</Text>
-        <Pressable onPress={() => router.back()} style={[styles.btn, { flexDirection: "row", alignItems: "center" }]}>
+        <Pressable onPress={() => router.back()} style={[ { flexDirection: "row", alignItems: "center" }]}>
           <Feather name="arrow-left" size={16} color="#E7EEF7" />
           <Text className="text-white ml-2">Go back</Text>
         </Pressable>
       </View>
     );
   }
-
+  const normalizedStatus: "ACTIVE" | "INACTIVE" =
+  data.status === "ACTIVE" ? "ACTIVE" : "INACTIVE";
   const title = `${data.model}${data.version ? " " + data.version : ""}`;
 
   return (
@@ -195,9 +197,9 @@ export default function VehicleDetailScreen() {
               {data.features?.seats != null && (
                 <SpecItem icon={<Feather name="users" size={18} color="#9FB3C8" />} label="Seats" value={String(data.features.seats)} />
               )}
-              {!!data.features?.drivetrain && (<View></View>
+              {/* {!!data.features?.drivetrain && (<View></View>
                 // <SpecItem icon={<MCI name="all-wheel-drive" size={18} color="#9FB3C8" />} label="Drivetrain" value={data.features.drivetrain} />
-              )}
+              )} */}
               {!!data.features?.battery && (
                 <SpecItem icon={<MCI name="battery-high" size={18} color="#9FB3C8" />} label="Battery" value={data.features.battery} />
               )}
@@ -243,7 +245,30 @@ export default function VehicleDetailScreen() {
             <Feather name="navigation-2" size={16} color="#9EC5FE" />
             <Text style={styles.btnOutlineText}>Book Test Drive</Text>
             </Pressable>
-
+            <Pressable
+              onPress={() => {
+                if (data) {
+                  // map data vào type Vehicle đã dùng trong FE của bạn
+                  dispatch(addTempVehicle({
+                    id: data.id,
+                    model: data.model,
+                    version: data.version ?? null,
+                    color: data.color ?? null,
+                    // msrp: String(data.msrp ?? ""),
+                    // features: data.features ?? null,
+                    // status: normalizedStatus,
+                    // year: data.year ?? null,
+                    // description: data.description ?? null,
+                    // image_url: data.image_url ?? null,
+                    // gallery: data.gallery ?? null,
+                    // wholesale_price: null as any,
+                  }));
+                }
+              }}
+              className="px-4 py-2 rounded-xl bg-emerald-600/90"
+            >
+              <Text className="text-white font-semibold">+ Add to Temp</Text>
+            </Pressable>
             <View style={{ width: 10 }} />
 
             <Pressable

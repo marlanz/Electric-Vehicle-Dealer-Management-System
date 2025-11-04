@@ -9,6 +9,7 @@ export type Vehicle = {
   image_url?: string | null;
   year?: number | null;
   wholesale_price?: string | null;
+  gallery?: string[] | null;
   description?: string | null;
 };
 

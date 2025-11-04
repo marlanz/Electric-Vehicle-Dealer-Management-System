@@ -48,3 +48,65 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+direction structure
+app/
+  (auth)/auth.tsx
+  (dealer)/
+    (tabs)/
+      index.tsx              // Dashboard staff
+      vehicles.tsx           // List vehicles
+      quotations.tsx         // List quotations
+      orders.tsx             // List orders
+      profile.tsx
+      customers.tsx
+      _layout.tsx
+    customers/
+      create.tsx
+    orders/
+      create.tsx
+    promotions/
+      index.tsx
+      [id].tsx
+    quotations/
+      create.tsx
+      [id].tsx
+    orders/
+      create.tsx
+      [id].tsx
+    (vehicles)/
+      [id].tsx               // Detail (đã có)
+    _layout.tsx
+    temp-selection.tsx
+  (dealer-manager)/
+    index.tsx
+    staffs/
+      index.tsx
+      create.tsx
+      [id].tsx
+    inventory/
+      index.tsx
+      create.tsx
+      [id].tsx
+    purchase-orders/
+      index.tsx
+      create.tsx
+      [id].tsx
+    oem-contracts/
+      create.tsx
+      [id].tsx
+  (shared)/
+    notifications.tsx
+    search.tsx
+  (evm)/
+    (tabs)/
+      _layout.tsx
+      ....
+  (shared)
+    testdrives.tsx
+  _layout.tsx
+  global.css
+  index.tsx
+src/
+  components
+  ...
