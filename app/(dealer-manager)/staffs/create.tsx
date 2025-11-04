@@ -1,25 +1,30 @@
-import React, { useMemo } from "react";
-import { View, Text, TextInput, Pressable, ActivityIndicator, Alert } from "react-native";
-import { Stack, router } from "expo-router";
+import React, { useMemo, useState } from "react";
+import { View, Text, TextInput, Pressable, ActivityIndicator, Alert, StyleSheet, ScrollView } from "react-native";
+import { router } from "expo-router";
+import { Feather } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useForm, Controller } from "react-hook-form";
 import { useAppDispatch } from "@/src/store";
 import { createDMStaff } from "@/src/features/dealerManager/staffs/staffSlice";
 import type { CreateStaffBody } from "@/src/features/dealerManager/staffs/types";
 
+const BG = "#0B1220";
+
 export default function DM_StaffCreate() {
   const dispatch = useAppDispatch();
+  const [submitting, setSubmitting] = useState(false);
 
   const {
     control,
     handleSubmit,
-    formState: { isSubmitting, errors },
+    formState: { errors },
   } = useForm<CreateStaffBody>({
     defaultValues: {
       email: "",
       password: "",
       full_name: "",
       role: "DEALER_STAFF",
-      dealer_id: "",
+      dealer_id: "",     // nếu backend tự suy ra từ token có thể bỏ qua
       status: "ACTIVE",
     },
     mode: "onSubmit",
@@ -27,65 +32,65 @@ export default function DM_StaffCreate() {
 
   const onSubmit = async (form: CreateStaffBody) => {
     try {
+      setSubmitting(true);
       const res = await dispatch(createDMStaff(form)).unwrap();
-      Alert.alert("Thành công", "Đã tạo staff mới");
+      Alert.alert("Success", "Staff created");
       router.replace(`/(dealer-manager)/staffs/${res.id}`);
     } catch (e: any) {
-      Alert.alert("Lỗi", e?.message ?? "Tạo staff thất bại");
+      Alert.alert("Error", e?.message ?? "Create failed");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const SaveBtn = useMemo(
-    () => () => (
-      <Pressable
-        disabled={isSubmitting}
-        onPress={handleSubmit(onSubmit)}
-        className="px-3 py-2 rounded-xl bg-emerald-600 disabled:opacity-60"
-      >
-        {isSubmitting ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text className="text-white font-semibold">Save</Text>
-        )}
-      </Pressable>
-    ),
-    [isSubmitting]
-  );
-
   return (
-    <View className="flex-1 bg-[#0B1220]">
-      <Stack.Screen options={{ title: "New Staff", headerRight: SaveBtn }} />
+    <View className="flex-1" style={{ backgroundColor: BG }}>
+      {/* Header đồng bộ: back + title + action (Save) */}
+      <SafeAreaView edges={["top"]} style={{ backgroundColor: BG }}>
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()} hitSlop={8} style={styles.headerIconBtn}>
+            <Feather name="arrow-left" size={18} color="#E7EEF7" />
+          </Pressable>
+          <View style={{ flex: 1, marginHorizontal: 8 }}>
+            <Text numberOfLines={1} style={styles.headerTitle}>New Staff</Text>
+            <Text numberOfLines={1} style={styles.headerSub}>Create a dealer-staff account</Text>
+          </View>
+          <Pressable disabled={submitting} onPress={handleSubmit(onSubmit)} hitSlop={8} style={[styles.headerIconBtn, { backgroundColor: "#1e3a8a", borderColor: "rgba(255,255,255,0.12)" }]}>
+            {submitting ? <ActivityIndicator color="#E7EEF7" /> : <Feather name="save" size={18} color="#E7EEF7" />}
+          </Pressable>
+        </View>
+      </SafeAreaView>
 
-      <View className="p-4 gap-4">
-        {/* Full name */}
-        <View>
-          <Text className="text-white mb-2">Full name *</Text>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24 }}>
+        <View className="rounded-2xl bg-white/5 border border-white/10 p-4">
+          {/* Full name (required) */}
+          <Text className="text-white/70 mb-1">Full name *</Text>
           <Controller
             control={control}
             name="full_name"
-            rules={{ required: "Bắt buộc" }}
+            rules={{ required: "Full name is required" }}
             render={({ field: { value, onChange } }) => (
               <TextInput
                 value={value}
                 onChangeText={onChange}
                 placeholder="VD: Trần Thị Staff"
                 placeholderTextColor="#9aa4b2"
-                className="rounded-2xl bg-white/5 border border-white/10 text-white px-4 py-3"
+                className="rounded-xl px-3 py-2 bg-white/10 text-white border border-white/10"
               />
             )}
           />
           {errors.full_name && <Text className="text-red-400 mt-1">{errors.full_name.message}</Text>}
-        </View>
 
-        {/* Email */}
-        <View>
-          <Text className="text-white mb-2">Email *</Text>
+          <View style={{ height: 12 }} />
+
+          {/* Email (required + pattern) */}
+          <Text className="text-white/70 mb-1">Email *</Text>
           <Controller
             control={control}
             name="email"
             rules={{
-              required: "Bắt buộc",
-              pattern: { value: /\S+@\S+\.\S+/, message: "Email không hợp lệ" },
+              required: "Email is required",
+              pattern: { value: /\S+@\S+\.\S+/, message: "Invalid email" },
             }}
             render={({ field: { value, onChange } }) => (
               <TextInput
@@ -95,97 +100,90 @@ export default function DM_StaffCreate() {
                 autoCapitalize="none"
                 placeholder="staff@dealer.vn"
                 placeholderTextColor="#9aa4b2"
-                className="rounded-2xl bg-white/5 border border-white/10 text-white px-4 py-3"
+                className="rounded-xl px-3 py-2 bg-white/10 text-white border border-white/10"
               />
             )}
           />
           {errors.email && <Text className="text-red-400 mt-1">{errors.email.message}</Text>}
-        </View>
 
-        {/* Password */}
-        <View>
-          <Text className="text-white mb-2">Password *</Text>
+          <View style={{ height: 12 }} />
+
+          {/* Password (required ≥ 6) */}
+          <Text className="text-white/70 mb-1">Password *</Text>
           <Controller
             control={control}
             name="password"
-            rules={{ required: "Bắt buộc", minLength: { value: 6, message: "≥ 6 ký tự" } }}
-            render={({ field: { value, onChange } }) => (
+            rules={{ required: "Password is required", minLength: { value: 6, message: "At least 6 characters" } }}
+            render={({ field: { value, onChange} }) => (
               <TextInput
                 value={value}
                 onChangeText={onChange}
                 secureTextEntry
                 placeholder="••••••"
                 placeholderTextColor="#9aa4b2"
-                className="rounded-2xl bg-white/5 border border-white/10 text-white px-4 py-3"
+                className="rounded-xl px-3 py-2 bg-white/10 text-white border border-white/10"
               />
             )}
           />
           {errors.password && <Text className="text-red-400 mt-1">{errors.password.message}</Text>}
-        </View>
 
-        {/* Dealer ID
-        <View>
-          <Text className="text-white mb-2">Dealer ID *</Text>
-          <Controller
-            control={control}
-            name="dealer_id"
-            rules={{ required: "Bắt buộc" }}
-            render={({ field: { value, onChange } }) => (
-              <TextInput
-                value={value}
-                onChangeText={onChange}
-                autoCapitalize="none"
-                placeholder="UUID dealer (ví dụ: 8498f460-...)"
-                placeholderTextColor="#9aa4b2"
-                className="rounded-2xl bg-white/5 border border-white/10 text-white px-4 py-3"
-              />
-            )}
-          />
-          {errors.dealer_id && <Text className="text-red-400 mt-1">{errors.dealer_id.message}</Text>}
-        </View> */}
+          <View style={{ height: 12 }} />
 
-        {/* Status */}
-        <View>
-          <Text className="text-white mb-2">Status *</Text>
+          {/* Status (pills) */}
+          <Text className="text-white/70 mb-1">Status *</Text>
           <Controller
             control={control}
             name="status"
-            rules={{ required: "Bắt buộc" }}
+            rules={{ required: "Status is required" }}
             render={({ field: { value, onChange } }) => (
-              <View className="flex-row gap-3">
-                {(["ACTIVE", "INACTIVE"] as const).map((s) => (
-                  <Pressable
-                    key={s}
-                    onPress={() => onChange(s)}
-                    className={`px-3 py-2 rounded-xl border ${
-                      value === s ? "bg-white/10 border-white" : "bg-white/5 border-white/20"
-                    }`}
-                  >
-                    <Text className="text-white">{s}</Text>
-                  </Pressable>
-                ))}
+              <View className="flex-row gap-2">
+                {(["ACTIVE", "INACTIVE"] as const).map((s) => {
+                  const active = value === s;
+                  return (
+                    <Pressable
+                      key={s}
+                      onPress={() => onChange(s)}
+                      className={`px-3 py-2 rounded-xl border ${active ? "bg-white/10 border-white" : "bg-white/5 border-white/20"}`}
+                    >
+                      <Text className="text-white">{s}</Text>
+                    </Pressable>
+                  );
+                })}
               </View>
             )}
           />
         </View>
 
-        {/* Role (fixed) */}
-        <View className="opacity-70">
-          <Text className="text-white mb-2">Role</Text>
-          <Text className="text-white/80 px-4 py-3 rounded-2xl bg-white/5 border border-white/10">
-            DEALER_STAFF
-          </Text>
+        {/* Footer phụ (nếu muốn bấm thay vì icon Save) */}
+        <View className="flex-row gap-3 mt-12">
+          <Pressable onPress={() => router.back()} className="px-4 py-2 rounded-xl bg-white/10 border border-white/15" disabled={submitting}>
+            <Text className="text-white">Cancel</Text>
+          </Pressable>
+          <Pressable onPress={handleSubmit(onSubmit)} className="px-4 py-2 rounded-xl bg-emerald-600 disabled:opacity-60" disabled={submitting}>
+            {submitting ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-semibold">Save</Text>}
+          </Pressable>
         </View>
-
-        {/* Save bottom (backup to headerRight) */}
-        <Pressable
-          disabled={isSubmitting}
-          onPress={handleSubmit(onSubmit)}
-          className="mt-6 items-center justify-center rounded-2xl bg-emerald-600 h-12 disabled:opacity-60"
-        >
-          {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-semibold">Save</Text>}
-        </Pressable>
-      </View>
+      </ScrollView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    height: 56,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: BG,
+  },
+  headerIconBtn: {
+    padding: 10,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+  headerTitle: { color: "white", fontWeight: "700", fontSize: 16 },
+  headerSub: { color: "rgba(255,255,255,0.6)", fontSize: 12 },
+});

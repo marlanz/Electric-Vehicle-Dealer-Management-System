@@ -1,5 +1,5 @@
 // app/_layout.tsx
-import { bootstrapAuth, logout, selectAuthLoading } from "@/src/features/auth/authSlice";
+import { bootstrapAuth, logout, selectAuthLoading, setTokens } from "@/src/features/auth/authSlice";
 import { store, useAppDispatch, useAppSelector } from "@/src/store";
 import { Slot } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -7,19 +7,23 @@ import { Provider } from "react-redux";
 import { ActivityIndicator, Text, View } from "react-native";
 import { useEffect } from "react";
 import "./global.css";
-import { setOnAuthFail } from "@/src/services/http";
+import { setAuthToken, setOnAuthFail, setOnTokenRefreshed } from "@/src/services/http";
 
 function BootstrapGate({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
   const loading = useAppSelector(selectAuthLoading);
-  useEffect(() => {
-    // 1️⃣ Khi app khởi động, load token
+    useEffect(() => {
     dispatch(bootstrapAuth());
 
-    // 2️⃣ Gắn callback khi token hết hạn
     setOnAuthFail(() => {
       console.log("🔒 Token expired — logging out user");
       dispatch(logout());
+    });
+
+    // ✅ khi refresh thành công: update Redux + axios header (đã làm) + storage (đã làm trong http)
+    setOnTokenRefreshed((token, refreshToken) => {
+      dispatch(setTokens({ token, refreshToken }));
+      setAuthToken(token);
     });
   }, [dispatch]);
   if (loading) {

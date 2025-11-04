@@ -99,11 +99,11 @@ export default function DealerTabsLayout() {
         screenOptions={{
           tabBarActiveTintColor: "#60A5FA",
           tabBarInactiveTintColor: "#94A3B8",
-          tabBarStyle: { backgroundColor: "#0B1220", borderTopColor: "rgba(255,255,255,0.08)" },
           tabBarLabelStyle: { fontSize: 11 },
-          headerStyle: { backgroundColor: "#0B1220" },
+          headerStyle: { backgroundColor: "#0A0F1A" },
+          headerTitleStyle: { color: "#FFFFFF", fontWeight: "700" },
+          tabBarStyle: { backgroundColor: "#0A0F1A", borderTopColor: "rgba(255,255,255,0.08)" },
           headerTitleAlign: "left",
-          headerTintColor: "#E7EEF7",
           headerShadowVisible: false,
         }}
       >

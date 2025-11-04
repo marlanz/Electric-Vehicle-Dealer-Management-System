@@ -10,11 +10,12 @@ export type User = {
 export type AuthState = {
   user: User | null;
   token: string | null;
+  refreshToken?: string | null;
   loading: boolean;
   error: string | null;
 };
 export type LoginPayload = { email: string; password: string };
 export type LoginResponse = { 
-    data: { user: User, token: string };
+    data: { user: User, token: string ,refreshToken?: string;   };
     success: boolean;
 };
