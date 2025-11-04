@@ -1,21 +1,33 @@
-// src/features/dealerManager/staffs/types.ts
 export type DMStaff = {
   id: string;
-  full_name: string;
   email: string;
-  phone?: string | null;
-  role: "DEALER_STAFF" | "DEALER_MANAGER";
+  full_name: string;
+  role: "DEALER_STAFF" | "DEALER_MANAGER" | "ADMIN" | string;
+  dealer_id: string;
   status: "ACTIVE" | "INACTIVE";
   created_at: string;
+  updated_at: string;
+  phone?: string;
+  dealers?: {
+    id: string;
+    code: string;
+    name: string;
+    address: string;
+    contact_email: string;
+    contact_phone: string;
+  };
 };
 
 export type CreateStaffBody = {
+  email: string;
+  password: string;
+  full_name: string;
+  role: "DEALER_STAFF";
+  dealer_id: string;
+  status: "ACTIVE" | "INACTIVE";
+};
+export type UpdateStaffBody = Partial<{
   full_name: string;
   email: string;
-  phone?: string;
-  role: "DEALER_STAFF";
-};
-
-export type UpdateStaffBody = Partial<Omit<CreateStaffBody, "role">> & {
-  status?: "ACTIVE" | "INACTIVE";
-};
+  status: "ACTIVE" | "INACTIVE" | string;
+}>;

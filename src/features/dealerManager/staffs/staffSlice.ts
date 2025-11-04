@@ -1,15 +1,14 @@
-// src/features/dealerManager/staffs/staffSlice.ts
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { http } from "@/src/services/http";
 import type { RootState } from "@/src/store";
 import type { DMStaff, CreateStaffBody, UpdateStaffBody } from "./types";
 
 const API = {
-  list:   "/api/v1/dealer-staffs",
-  create: "/api/v1/dealer-staffs",
-  detail: (id: string) => `/api/v1/dealer-staffs/${id}`,
-  update: (id: string) => `/api/v1/dealer-staffs/${id}`,
-  remove: (id: string) => `/api/v1/dealer-staffs/${id}`,
+  list:   "/users",
+  detail: (id: string) => `/users/${id}`,
+  create: "/users",
+  update: (id: string) => `/users/${id}`,
+  remove: (id: string) => `/users/${id}`,
 };
 
 type State = {
@@ -19,31 +18,52 @@ type State = {
   detail: Record<string, DMStaff | undefined>;
   detailLoading: boolean;
 };
+
 const initial: State = { items: [], loading: false, error: null, detail: {}, detailLoading: false };
 
+// --- GET all dealer staffs ---
 export const fetchDMStaffs = createAsyncThunk<DMStaff[]>(
   "dmStaffs/fetch",
-  async () => (await http.get<{ success: boolean; data: { staffs: DMStaff[] } }>(API.list)).data.data.staffs
+  async () => {
+    const res = await http.get<{ success: boolean; data: { users: DMStaff[] } }>(
+      `${API.list}?role=DEALER_STAFF&limit=50&offset=0`
+    );
+    return res.data.data.users;
+  }
 );
 
+// --- GET staff by ID ---
 export const fetchDMStaffById = createAsyncThunk<DMStaff, { id: string }>(
   "dmStaffs/fetchById",
-  async ({ id }) => (await http.get<{ success: boolean; data: { staff: DMStaff } }>(API.detail(id))).data.data.staff
+  async ({ id }) => {
+    const res = await http.get<{ success: boolean; data: { user: DMStaff } }>(API.detail(id));
+    return res.data.data.user;
+  }
 );
 
+// --- CREATE staff ---
 export const createDMStaff = createAsyncThunk<DMStaff, CreateStaffBody>(
   "dmStaffs/create",
-  async (body) => (await http.post<{ success: boolean; data: { staff: DMStaff } }>(API.create, body)).data.data.staff
+  async (body) => {
+    const res = await http.post<{ success: boolean; data: { user: DMStaff } }>(API.create, body);
+    return res.data.data.user;
+  }
 );
 
+// 🔁 PATCH
 export const updateDMStaff = createAsyncThunk<DMStaff, { id: string; body: UpdateStaffBody }>(
   "dmStaffs/update",
-  async ({ id, body }) => (await http.put<{ success: boolean; data: { staff: DMStaff } }>(API.update(id), body)).data.data.staff
+  async ({ id, body }) =>
+    (await http.patch<{ success: boolean; data: { user: DMStaff } }>(API.update(id), body)).data.data.user
 );
 
+// --- DELETE staff ---
 export const deleteDMStaff = createAsyncThunk<string, { id: string }>(
   "dmStaffs/delete",
-  async ({ id }) => { await http.delete(API.remove(id)); return id; }
+  async ({ id }) => {
+    await http.delete(API.remove(id));
+    return id;
+  }
 );
 
 const slice = createSlice({
@@ -68,7 +88,7 @@ const slice = createSlice({
       s.items = s.items.filter(x => x.id !== a.payload);
       delete s.detail[a.payload];
     });
-  }
+  },
 });
 
 export default slice.reducer;

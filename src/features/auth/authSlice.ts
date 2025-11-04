@@ -1,6 +1,6 @@
-import { http, setAuthToken } from "@/src/services/http";
-import { storage } from "@/src/services/storage";
-import type { RootState } from "@/src/store";
+import { http, setAuthToken } from "../../services/http";
+import { storage } from "../../services/storage";
+import type { RootState } from "../../store";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { AuthState, LoginPayload, LoginResponse, User } from "./types";
 
@@ -31,13 +31,13 @@ export const login = createAsyncThunk<LoginResponse, LoginPayload>(
   }
 );
 
-export const logout = createAsyncThunk<void, void>(
-  "auth/logout",
-  async () => {
-    await storage.del(AUTH_KEY);
-    setAuthToken(null);
-  }
-);
+// export const logout = createAsyncThunk<void, void>(
+//   "auth/logout",
+//   async () => {
+//     await storage.del(AUTH_KEY);
+//     setAuthToken(null);
+//   }
+// );
 
 const initialState: AuthState = {
   user: null,
@@ -49,7 +49,15 @@ const initialState: AuthState = {
 const slice = createSlice({
   name: "auth",
   initialState,
-  reducers: {},
+  reducers: {
+    logout(state) {
+      state.user = null;
+      state.token = null;
+      state.error = null;
+      storage.del(AUTH_KEY);
+      setAuthToken(null);
+    },
+  },
   extraReducers: (b) => {
     b.addCase(bootstrapAuth.fulfilled, (s, a) => {
       s.user = a.payload.user;
@@ -57,7 +65,8 @@ const slice = createSlice({
       s.loading = false;
     });
     b.addCase(login.pending, (s) => {
-      s.error = null; s.loading = true;
+      s.error = null;
+      s.loading = true;
     });
     b.addCase(login.fulfilled, (s, a) => {
       s.loading = false;
@@ -68,12 +77,10 @@ const slice = createSlice({
       s.loading = false;
       s.error = a.error.message ?? "Login failed";
     });
-    b.addCase(logout.fulfilled, (s) => {
-      s.user = null; s.token = null; s.error = null;
-    });
-  }
+  },
 });
 
+export const { logout } = slice.actions;
 export default slice.reducer;
 
 // Side-effect: persist & set header sau khi login

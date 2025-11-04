@@ -1,5 +1,5 @@
 // app/_layout.tsx
-import { bootstrapAuth, selectAuthLoading } from "@/src/features/auth/authSlice";
+import { bootstrapAuth, logout, selectAuthLoading } from "@/src/features/auth/authSlice";
 import { store, useAppDispatch, useAppSelector } from "@/src/store";
 import { Slot } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -7,11 +7,21 @@ import { Provider } from "react-redux";
 import { ActivityIndicator, Text, View } from "react-native";
 import { useEffect } from "react";
 import "./global.css";
+import { setOnAuthFail } from "@/src/services/http";
 
 function BootstrapGate({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
   const loading = useAppSelector(selectAuthLoading);
-  useEffect(() => { dispatch(bootstrapAuth()); }, []);
+  useEffect(() => {
+    // 1️⃣ Khi app khởi động, load token
+    dispatch(bootstrapAuth());
+
+    // 2️⃣ Gắn callback khi token hết hạn
+    setOnAuthFail(() => {
+      console.log("🔒 Token expired — logging out user");
+      dispatch(logout());
+    });
+  }, [dispatch]);
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-[#0B1220]">
