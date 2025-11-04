@@ -1,0 +1,18 @@
+export const ENDPOINTS = {
+  LOGIN: "/Users/Login",
+  REGISTER: "/Users/register",
+  VERIFY_ACCOUNT: "/Users/verify-register",
+  SEND_RESET_PW_CODE: "/Users/request-reset-password",
+  CHECK_RESET_PW_CODE: "/Users/confirm-reset-password",
+  GET_ALL_RESTAURANTS: "/restaurants/get-all-restaurant",
+  SEARCH_RESTAURANTS_DB: "/Restaurants/search-by-name-with-paging",
+  GET_RESTAURANT_DETAIL: "/Restaurants/get-all-restaurant-by-id",
+  GET_USER_PROFILE: "/Users/get-profile-user-by-id",
+  GET_RESTAURANT_BY_CATEGORY: "/Restaurants/search-by-categoryId-with-paging",
+  CREATE_USER_PREFERENCE: "/Users/create-user-preference",
+  CREATE_REVIEW: "/Posts/create-post-mobile",
+  GET_POSTS_BY_RESTAURANT_ID: "/Posts/get-post-by-restaurant-id",
+  GET_ALL_POST: "/Posts/get-all-paged",
+  GET_AUTHOR_NAME: "/Users/get-fullname-by-userId",
+  // SEARCH_RESTAURANTS_GOOGLE: "/Restaurants/search-by-name-with-paging",
+};

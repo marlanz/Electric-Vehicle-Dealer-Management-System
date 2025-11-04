@@ -1,4 +1,5 @@
 import CustomButton from "@/src/components/ui/CustomButton";
+import CustomerPickerModal from "@/src/components/ui/CustomerPickerModal";
 import CustomModelSpecs from "@/src/components/ui/CustomModelSpecs";
 import DateTimeInput from "@/src/components/ui/DateTimeInput ";
 import { color, images } from "@/src/constants";
@@ -37,11 +38,30 @@ const vehicleDetail = {
   desc: "Vinfast VF7 is a high-performance electric sedan with unparallel rage and exhilirating acceleration",
 };
 
-const CreateAppointment = () => {
-  const [date, setDate] = useState(new Date());
-  const [mode, setMode] = useState<"date" | "time">("date");
-  const [show, setShow] = useState(false);
+export const customers = [
+  {
+    id: "CUS-001",
+    name: "Nguyễn Minh Sang",
+    phone: "+84 98738726",
+    email: "sang.nguyen@example.com",
+  },
+  {
+    id: "CUS-002",
+    name: "Trần Thu Hà",
+    phone: "+84 912345678",
+    email: "ha.tran@example.com",
+  },
+  {
+    id: "CUS-003",
+    name: "Lê Hoàng Dũng",
+    phone: "+84 988222111",
+    email: "dung.le@example.com",
+  },
+];
 
+const CreateAppointment = () => {
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState(customers[0]);
   return (
     <SafeAreaView className="flex-1 px-4">
       <View className="flex-row justify-between py-5">
@@ -72,41 +92,46 @@ const CreateAppointment = () => {
           <View className="p-[15px] bg-gray rounded-[10px]">
             <View className="flex-row justify-between mb-5">
               <View className="flex-row gap-2 items-center">
-                <Ionicons
-                  name="person-outline"
-                  size={24}
-                  color={color.iconColor}
-                />
+                <Ionicons name="person-outline" size={24} color="white" />
                 <Text className="font-semibold text-xl text-white">
                   Customer Information
                 </Text>
               </View>
-              <Text className="text-[#16D68F] font-medium textbase px-[10px] py-[5px] bg-[#16D68F]/[0.1] rounded-[8px]">
-                Verified
-              </Text>
+
+              <Pressable onPress={() => setShowCustomerModal(true)}>
+                <AntDesign name="user-switch" size={24} color="white" />
+              </Pressable>
             </View>
-            <View className="flex-row justify-between items-center">
-              <View className="flex-row gap-4">
-                <Image
-                  source={images.avt_placeholder}
-                  className="size-[65px] rounded-full"
-                  resizeMode="contain"
-                />
-                <View>
-                  <Text className="font-medium text-xl text-white">
-                    Nguyễn Minh Sang
-                  </Text>
-                  <Text className="mt-1 text-secondary font-medium text-base">
-                    +84 98738726
-                  </Text>
-                  <Text className="text-secondary font-medium text-base mt-1">
-                    johndoe.test@gmail.com
-                  </Text>
-                </View>
+
+            <View className="flex-row gap-4 items-center">
+              <Image
+                source={images.avt_placeholder}
+                className="size-[65px] rounded-full"
+              />
+
+              <View>
+                <Text className="font-medium text-xl text-white">
+                  {selectedCustomer.name}
+                </Text>
+                <Text className="text-secondary text-base">
+                  {selectedCustomer.phone}
+                </Text>
+                <Text className="text-secondary text-base">
+                  {selectedCustomer.email}
+                </Text>
               </View>
-              <AntDesign name="user-switch" size={24} color="white" />
             </View>
           </View>
+
+          <CustomerPickerModal
+            visible={showCustomerModal}
+            customers={customers}
+            onClose={() => setShowCustomerModal(false)}
+            onSelect={(customer) => {
+              setSelectedCustomer(customer);
+              setShowCustomerModal(false);
+            }}
+          />
           {/* Vehicle info */}
           <View className="p-[15px] bg-gray rounded-[10px]">
             <View className="flex-row justify-between mb-5">
