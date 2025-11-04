@@ -3,6 +3,13 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import authReducer from "@/src/features/auth/authSlice";
 import vehiclesReducer from "@/src/features/vehicles/vehiclesSlice";
 import quotationsReducer from "@/src/features/quotations/quotationsSlice";
+import tempSelection from "@/src/features/selections/tempSelectionsSlice";
+import customers from "@/src/features/customers/customerSlice";
+import dmStaffs      from "@/src/features/dealerManager/staffs/staffSlice";
+import dmInventory   from "@/src/features/dealerManager/inventory/inventorySlice";
+import dmOrders      from "@/src/features/dealerManager/orders/dmOrdersSlice";
+import oemCatalog    from "@/src/features/dealerManager/catalog/oemCatalogSlice";
+
 import { http } from "@/src/services/http";
 
 export const store = configureStore({
@@ -10,6 +17,12 @@ export const store = configureStore({
     auth: authReducer,
     vehicles: vehiclesReducer,
     quotations: quotationsReducer,
+    tempSelection,
+    customers,
+    dmStaffs,
+    dmInventory,
+    dmOrders,
+    oemCatalog,
   },
   middleware: (gDM) =>
     gDM({

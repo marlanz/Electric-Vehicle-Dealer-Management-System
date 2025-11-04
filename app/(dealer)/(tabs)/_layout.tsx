@@ -105,25 +105,49 @@ export default function DealerTabsLayout() {
           headerTitleAlign: "left",
           headerTintColor: "#E7EEF7",
           headerShadowVisible: false,
-          headerTitle: () => <DealerHeaderTitle />,
-          headerRight: () => <DealerHeaderRight />,
         }}
       >
         <Tabs.Screen
           name="index"
-          options={{ title: "Dashboard", tabBarIcon: ({ color, size }) => <Feather name="home" size={size} color={color} /> }}
+          options={{
+            title: "Dashboard",
+            tabBarIcon: ({ color, size }) => <Feather name="home" size={size} color={color} />,
+          }}
         />
         <Tabs.Screen
           name="vehicles"
-          options={{ title: "Vehicles", tabBarIcon: ({ color, size }) => <Feather name="truck" size={size} color={color} /> }}
+          options={{
+            title: "Vehicles",
+            tabBarIcon: ({ color, size }) => <Feather name="truck" size={size} color={color} />,
+          }}
         />
         <Tabs.Screen
           name="quotations"
-          options={{ title: "Quotations", tabBarIcon: ({ color, size }) => <Feather name="file-text" size={size} color={color} /> }}
+          options={{
+            title: "Quotations",
+            tabBarIcon: ({ color, size }) => <Feather name="file-text" size={size} color={color} />,
+          }}
         />
         <Tabs.Screen
           name="orders"
-          options={{ title: "Orders", tabBarIcon: ({ color, size }) => <Feather name="shopping-bag" size={size} color={color} /> }}
+          options={{
+            title: "Orders",
+            tabBarIcon: ({ color, size }) => <Feather name="shopping-bag" size={size} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="customers"
+          options={{
+            title: "Customers",
+            tabBarIcon: ({ color, size }) => <Feather name="users" size={size} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: "Profile",
+            tabBarIcon: ({ color, size }) => <Feather name="user" size={size} color={color} />,
+          }}
         />
       </Tabs>
     </>

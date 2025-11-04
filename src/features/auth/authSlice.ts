@@ -82,7 +82,6 @@ export const persistAuth = async (data: LoginResponse) => {
   await storage.set(AUTH_KEY, { token: data.data.token, user: data.data.user });
   setAuthToken(data.data.token);
 };
-
 // Selectors
 export const selectAuth = (s: RootState) => s.auth;
 export const selectUser = (s: RootState) => s.auth.user;
