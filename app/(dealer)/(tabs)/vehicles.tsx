@@ -95,7 +95,7 @@ export default function VehiclesScreen() {
       <FlatList
         contentContainerStyle={{ padding: 12, paddingBottom: 24, flexGrow: 1 }}
         data={items}
-        keyExtractor={(it) => String(it.id)}
+        keyExtractor={(it) => String(it.vehicle_id)}
         renderItem={({ item }) => <VehicleCard v={item} />}
         ListHeaderComponent={renderHeader}
         onEndReachedThreshold={0.5}

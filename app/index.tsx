@@ -23,7 +23,7 @@ export default function Index() {
 
   // Điều hướng theo role
   const r:any = user?.role;
-  if (r === "DEALER")        return <Redirect href="/(dealer)/(tabs)" />;
+  if (r === "DEALER_STAFF")        return <Redirect href="/(dealer)/(tabs)" />;
   if (r === "EVM_STAFF")     return <Redirect href="/(evm)/(tabs)" />;
   if (r === "DEALER_MANAGER")return <Redirect href="/(dealer-manager)/(tabs)" />;
 
