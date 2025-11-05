@@ -9,7 +9,7 @@ import dmStaffs      from "@/src/features/dealerManager/staffs/staffSlice";
 import dmInventory   from "@/src/features/dealerManager/inventory/inventorySlice";
 import dmOrders      from "@/src/features/dealerManager/orders/dmOrdersSlice";
 import oemCatalog    from "@/src/features/dealerManager/catalog/oemCatalogSlice";
-
+import evmOrders    from "@/src/features/evmStaff/ordersSlice";
 import { http } from "@/src/services/http";
 
 export const store = configureStore({
@@ -23,6 +23,7 @@ export const store = configureStore({
     dmInventory,
     dmOrders,
     oemCatalog,
+    evmOrders,
   },
   middleware: (gDM) =>
     gDM({

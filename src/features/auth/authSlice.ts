@@ -82,6 +82,7 @@ const slice = createSlice({
       s.loading = false;
       s.user = a.payload.data.user;
       s.token = a.payload.data.token;
+      s.refreshToken = a.payload.data.refreshToken ?? null;
     });
     b.addCase(login.rejected, (s, a) => {
       s.loading = false;
