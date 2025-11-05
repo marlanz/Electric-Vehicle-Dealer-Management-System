@@ -1,130 +1,141 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, Text, TextInput, View } from "react-native";
-import { useAppDispatch, useAppSelector } from "@/src/store";
+import Features from "@/src/components/ui/CustomFeatures";
+import { color } from "@/src/constants";
+import { Ionicons } from "@expo/vector-icons";
+import cn from "clsx";
+import { router } from "expo-router";
+import React, { useState } from "react";
 import {
-  fetchVehicles, selectVehicles, selectVehiclesLoading, selectVehiclesMeta,
-  selectVehiclesRefreshing, setFilters, setSearch
-} from "@/src/features/vehicles/vehiclesSlice";
-import VehicleCard from "@/src/components/vehicles/VehicleCard";
-type Timeout = ReturnType<typeof setTimeout>;
+  FlatList,
+  Image,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { modelStock } from ".";
 
-const brands = ["All Brands", "Tesla", "BYD", "Honda", "Vinfast"]; // demo; nếu cần lấy từ API thì thay
+const brands = [
+  {
+    id: 1,
+    name: "All brands",
+  },
+  { id: 2, name: "Tesla" },
+  { id: 3, name: "BYD" },
+  { id: 4, name: "Vinfast" },
+  { id: 5, name: "Honda" },
+];
 
-export default function VehiclesScreen() {
-  const dispatch = useAppDispatch();
-  const items = useAppSelector(selectVehicles);
-  const loading = useAppSelector(selectVehiclesLoading);          // chỉ dùng cho lần đầu
-  const refreshing = useAppSelector(selectVehiclesRefreshing);    // kéo-to-refresh
-  const { total, filters } = useAppSelector(selectVehiclesMeta);
+const Vehicles = () => {
+  const [selected, setSelected] = useState(1);
 
-  type Timeout = ReturnType<typeof setTimeout>;
-  const [q, setQ] = useState(filters.search ?? "");
-  const debRef = useRef<Timeout | null>(null);
+  return (
+    <View style={{ backgroundColor: color.backgroundPrimary, flex: 1 }}>
+      <SafeAreaView className="px-4 ">
+        <View className="pb-6">
+          <View className="flex-row justify-between py-5">
+            <Text className="text-2xl font-semibold text-white">
+              Vehicles Catalog
+            </Text>
+            <Ionicons name="heart-outline" size={24} color={"white"} />
+          </View>
 
-  const onChangeSearch = (t: string) => {
-    setQ(t);
-    if (debRef.current) clearTimeout(debRef.current);
-    debRef.current = setTimeout(() => {
-      dispatch(setSearch(t.trim() === "" ? '' : t));
-      // tìm kiếm lại nhưng KHÔNG nhảy spinner full-screen
-      dispatch(fetchVehicles({ mode: "silent" }));  // <- xem phần slice bên dưới
-    }, 350);
-  };
+          <View className="p-3 bg-gray rounded-[10px] flex-row items-center gap-3">
+            <Ionicons
+              name="search-outline"
+              size={24}
+              color={color.textSecondary}
+            />
+            <TextInput
+              placeholder="Search by model or VIN..."
+              className="font-medium text-secondary text-xl flex-1 pb-1"
+              placeholderTextColor={color.textSecondary}
+              // value={search.name}
+              // onChangeText={handleChange}
+              // onSubmitEditing={handleSearch}
+              returnKeyType="search"
+              // ref={inputRef}
+              autoFocus={true}
+            />
+          </View>
+          <FlatList
+            data={brands}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => {
+              const isActive = selected === item.id;
 
-  const onSelectBrand = (b: string) => {
-    dispatch(setFilters({ ...filters, model: b === "All Brands" ? undefined : b, search: q || undefined }));
-    dispatch(fetchVehicles({ mode: "silent" }));
-  };
-
-  const loadMore = () => {
-    if (items.length < total) {
-      dispatch(fetchVehicles({ append: true }));
-    }
-  };
-
-  const onRefresh = () => {
-    dispatch(fetchVehicles({ refresh: true })); // chỉ bật cờ refreshing
-  };
-
-  useEffect(() => {
-    // Lần đầu vào màn mới dùng loading
-    dispatch(fetchVehicles({ initial: true }));
-  }, [dispatch]);
-
-  const renderHeader = useMemo(
-    () => (
-      <View className="px-3 py-3">
-        {/* top bar */}
-        <View className="flex-row items-center justify-center mb-3">
-          <Text className="text-white font-semibold text-base">Vehicle Catalog</Text>
-        </View>
-
-        {/* search */}
-        <View className="bg-[#111827] rounded-2xl px-4 py-2 mb-3">
-          <TextInput
-            value={q}
-            onChangeText={onChangeSearch}
-            placeholder="Search by model or VIN…"
-            placeholderTextColor="#94a3b8"
-            className="text-white"
+              return (
+                <Pressable
+                  onPress={() => setSelected(item.id)}
+                  className={cn(
+                    "px-4 py-[10px] rounded-[10px] ",
+                    isActive ? "bg-blue" : "bg-gray border-gray-700"
+                  )}
+                >
+                  <Text
+                    className={cn(
+                      "font-semibold text-base",
+                      isActive ? "text-white" : "text-secondary"
+                    )}
+                  >
+                    {item.name}
+                  </Text>
+                </Pressable>
+              );
+            }}
+            contentContainerClassName="gap-3 mt-4"
+            // style={{ overflow: "visible" }}
           />
         </View>
 
-        {/* brand chips */}
-        <View className="flex-row flex-wrap gap-2 mb-2">
-          {brands.map((b) => {
-            const active = (filters.model ?? "All Brands") === b;
-            return (
-              <Pressable
-                key={b}
-                onPress={() => onSelectBrand(b)}
-                className={`px-3 py-1.5 rounded-full ${active ? "bg-blue-600" : "bg-white/10"}`}
-              >
-                <Text className={active ? "text-white" : "text-white/70"}>{b}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
-    ),
-    [q, filters.model]
-  );
+        <FlatList
+          data={modelStock}
+          keyExtractor={(item) => item.id.toString()}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <Pressable onPress={() => router.push(`/(vehicle)/${item.id}`)}>
+              <View className="flex-1 rounded-[15px] overflow-hidden bg-gray p-5">
+                <Image
+                  source={{ uri: item.img }}
+                  resizeMode="cover"
+                  className="w-full h-[200px] rounded-[15px]"
+                />
+                <View className="mt-3 mb-2">
+                  <View className="justify-between flex-row items-center">
+                    <Text className="text-xl font-semibold text-white">
+                      {item.model}
+                    </Text>
+                    <Text className="text-base font-medium text-secondary">
+                      {item.brand}
+                    </Text>
+                  </View>
+                </View>
+                <View className="flex-row justify-between">
+                  <Features number={item.maxDistance} icon={"engine-outline"} />
+                  <Features number={item.seat} icon={"seat-outline"} />
+                  <Features number={item.stock} icon={"battery-outline"} />
+                  <Features number={item.drivetrain} icon={"abacus"} />
+                </View>
 
-  return (
-    <View className="flex-1 bg-[#0B1220]">
-      <FlatList
-        contentContainerStyle={{ padding: 12, paddingBottom: 24, flexGrow: 1 }}
-        data={items}
-        keyExtractor={(it) => String(it.vehicle_id)}
-        renderItem={({ item }) => <VehicleCard v={item} />}
-        ListHeaderComponent={renderHeader}
-        onEndReachedThreshold={0.5}
-        onEndReached={loadMore}
-        refreshing={refreshing} 
-        onRefresh={onRefresh}             
-        ListEmptyComponent={
-          loading
-            ? (
-              <View className="flex-1 items-center justify-center py-24">
-                <ActivityIndicator />
-                <Text className="text-white/70 mt-2">Loading vehicles…</Text>
+                <View className="flex-row gap-3 items-end mt-5">
+                  <Text className="font-semibold text-white text-xl">
+                    Starting at {item.price}
+                  </Text>
+                  <Text className="text-secondary text-base line-through">
+                    {item.discount}
+                  </Text>
+                </View>
               </View>
-            )
-            : (
-              <View className="flex-1 items-center justify-center py-24">
-                <Text className="text-white/70">No vehicles found</Text>
-              </View>
-            )
-        }
-        ListFooterComponent={
-          items.length < total ? (
-            <View className="py-4 items-center">
-              <Text className="text-white/60">Scroll to load more…</Text>
-            </View>
-          ) : null
-        }
-      />
+            </Pressable>
+          )}
+          contentContainerClassName=" gap-3 "
+          contentContainerStyle={{ paddingBottom: 190 }}
+        />
+      </SafeAreaView>
     </View>
   );
-}
+};
 
+export default Vehicles;

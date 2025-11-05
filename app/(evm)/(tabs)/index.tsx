@@ -1,8 +1,8 @@
 import Features from "@/src/components/ui/CustomFeatures";
 import RoundDivider from "@/src/components/ui/RoundDivider";
 import { color, images } from "@/src/constants";
-import { selectAuth } from "@/src/features/auth/authSlice";
-import { useAppSelector } from "@/src/store";
+import { logout, selectAuth } from "@/src/features/auth/authSlice";
+import { useAppDispatch, useAppSelector } from "@/src/store";
 import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 import { router } from "expo-router";
@@ -110,6 +110,14 @@ export const modelStock = [
 const Home = () => {
   const { user, token } = useAppSelector(selectAuth);
 
+  const dispatch = useAppDispatch();
+
+  const onLogout = async () => {
+    await dispatch(logout());
+
+    router.replace("/(auth)/auth");
+  };
+
   useEffect(() => {
     const fetchDealerInventory = async (dealerId: any) => {
       try {
@@ -157,7 +165,12 @@ const Home = () => {
               </Text>
             </View>
           </View>
-          <Ionicons name="log-out-outline" size={24} color={"white"} />
+          <Ionicons
+            name="log-out-outline"
+            size={24}
+            color={"white"}
+            onPress={onLogout}
+          />
         </View>
 
         <ScrollView
