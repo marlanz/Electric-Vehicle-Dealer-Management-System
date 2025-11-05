@@ -1,0 +1,1 @@
+export const pretty = (obj : any) => JSON.stringify(obj, null, 2);

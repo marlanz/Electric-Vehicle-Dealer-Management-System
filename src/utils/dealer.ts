@@ -1,0 +1,1 @@
+export const FIXED_DEALER_ID = "8498f460-f5bf-4e01-820b-1042386e849a" as const;
