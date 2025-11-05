@@ -1,14 +1,20 @@
 import Features from "@/src/components/ui/CustomFeatures";
-import RoundDivider from "@/src/components/ui/RoundDivider";
 import { color, images } from "@/src/constants";
+// import { color, images } from "@/src/constants";
 import { logout, selectAuth } from "@/src/features/auth/authSlice";
+import useVehicles from "@/src/hooks/useVehicles";
 import { useAppDispatch, useAppSelector } from "@/src/store";
 import { Ionicons } from "@expo/vector-icons";
-import axios from "axios";
 import { router } from "expo-router";
 import React, { useEffect } from "react";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
 
+import CustomAppointmnet from "@/src/components/dashboard/CustomAppointmnet";
+import CustomDashboardCard from "@/src/components/dashboard/CustomDashboardCard";
+import useAppointments from "@/src/hooks/useAppointments";
+import useOrders from "@/src/hooks/useOrders";
+import useQuotations from "@/src/hooks/useQuotations";
+import { formatToDollar } from "@/src/utils";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const dashboardStats = [
@@ -108,7 +114,15 @@ export const modelStock = [
 ];
 
 const Home = () => {
-  const { user, token } = useAppSelector(selectAuth);
+  const { user } = useAppSelector(selectAuth);
+
+  const { fetchAllVehicles, vdata } = useVehicles();
+
+  const { fetchAllAppointments, adata } = useAppointments();
+
+  const { fetchAllQuotations, qdata } = useQuotations();
+
+  const { fetchAllOrders, odata } = useOrders();
 
   const dispatch = useAppDispatch();
 
@@ -119,26 +133,16 @@ const Home = () => {
   };
 
   useEffect(() => {
-    const fetchDealerInventory = async (dealerId: any) => {
-      try {
-        const response = await axios.get(
-          `https://electric-vehicle-dealer-management.onrender.com/api/v1/dealers/dealerId`,
-          {
-            params: { page: 1, limit: 50 },
-            headers: {
-              Authorization: `${token}`,
-            },
-          }
-        );
-        console.log("inventory", response);
-
-        return response.data;
-      } catch (err) {
-        console.log(err);
-      }
-    };
-    fetchDealerInventory(user?.dealer_id);
-  }, []);
+    fetchAllVehicles();
+    fetchAllAppointments();
+    fetchAllQuotations();
+    fetchAllOrders();
+  }, [
+    fetchAllVehicles,
+    fetchAllAppointments,
+    fetchAllQuotations,
+    fetchAllOrders,
+  ]);
 
   return (
     <View
@@ -183,31 +187,35 @@ const Home = () => {
           </Text>
 
           {/* Dashboard cards grid */}
-          <View className="flex-row flex-wrap justify-between">
-            {dashboardStats.map((d, index) => (
-              <View
-                key={index}
-                className="bg-gray p-5 rounded-[10px] w-[48%] mb-4"
-              >
-                <Text className="text-white text-3xl font-semibold">
-                  {d.number}
-                </Text>
-                <Text className="font-medium text-xl text-secondary mt-2">
-                  {d.desc}
-                </Text>
-
-                <View className="mt-4 flex-row gap-2 items-center">
-                  <Ionicons
-                    name={d.icon as any}
-                    size={24}
-                    color={color.iconColor}
-                  />
-                  <Text className="text-white font-semibold text-lg">
-                    {d.title}
-                  </Text>
-                </View>
-              </View>
-            ))}
+          <View className="">
+            <View className="flex-row justify-between">
+              <CustomDashboardCard
+                title="Quotations"
+                desc={`My Total \nQuotations`}
+                value={qdata.length}
+                icon={"document-outline"}
+              />
+              <CustomDashboardCard
+                title="Sales"
+                desc={`My Total \nVehicales Sold`}
+                value={`${odata.length}`}
+                icon={"cash-outline"}
+              />
+            </View>
+            <View className="flex-row justify-between">
+              <CustomDashboardCard
+                title="Appointments"
+                desc={`Test Drive \nAppointments`}
+                value={adata.length}
+                icon={"car-outline"}
+              />
+              <CustomDashboardCard
+                title="Inventory"
+                desc={`Total Cars \nIn Stock`}
+                value={vdata.count}
+                icon={"cube-outline"}
+              />
+            </View>
           </View>
 
           {/* Test drive appointments */}
@@ -216,41 +224,13 @@ const Home = () => {
           </Text>
 
           <View className="flex-col gap-3 ">
-            {testDriveAppointments.map((t, index) => (
-              <View
+            {adata.slice(0, 3).map((t, index) => (
+              <CustomAppointmnet
                 key={index}
-                className="p-5 bg-gray rounded-[10px] w-full items-center justify-between flex-row"
-              >
-                <View className="flex-col gap-3">
-                  <View>
-                    <Text className="font-semibold text-xl text-white mb-1">
-                      {t.name}
-                    </Text>
-                    <View className="flex-row gap-2 items-center">
-                      <Text className="text-secondary text-base font-medium">
-                        {t.vehicle} - {t.variant}
-                      </Text>
-                      <RoundDivider />
-                      <Text className="text-secondary font-medium text-base">
-                        {t.color}
-                      </Text>
-                    </View>
-                  </View>
-                  <View className="flex-row gap-2">
-                    <Ionicons
-                      name="calendar-clear-outline"
-                      size={16}
-                      color={color.textSecondary}
-                    />
-                    <Text className="font-medium text-secondary">{t.date}</Text>
-                  </View>
-                </View>
-                <Ionicons
-                  name="chevron-forward-outline"
-                  color={"white"}
-                  size={24}
-                />
-              </View>
+                date={t.appointedDate}
+                vehicleID={t.vehicleID}
+                customerID={t.customerID}
+              />
             ))}
           </View>
 
@@ -259,14 +239,14 @@ const Home = () => {
           </Text>
 
           <View className="flex-col gap-3">
-            {modelStock.map((s, index) => (
+            {vdata.list.map((s, index) => (
               <Pressable
                 onPress={() => router.push(`/(vehicle)/${s.id}`)}
                 key={index}
                 className="flex-1 rounded-[15px] overflow-hidden bg-gray p-5"
               >
                 <Image
-                  source={{ uri: s.img }}
+                  source={{ uri: s.imageURL }}
                   resizeMode="cover"
                   className="w-full h-[200px] rounded-[15px]"
                 />
@@ -275,24 +255,27 @@ const Home = () => {
                     <Text className="text-xl font-semibold text-white">
                       {s.model}
                     </Text>
-                    <Text className="text-base font-medium text-secondary">
-                      {s.brand}
+                    <Text className="text-lg font-medium text-secondary">
+                      {s.version}
                     </Text>
                   </View>
                 </View>
                 <View className="flex-row justify-between">
-                  <Features number={s.maxDistance} icon={"engine-outline"} />
-                  <Features number={s.seat} icon={"seat-outline"} />
-                  <Features number={s.stock} icon={"battery-outline"} />
-                  <Features number={s.drivetrain} icon={"abacus"} />
+                  <Features number={s.features.motor} icon={"engine-outline"} />
+                  <Features number={s.features.seats} icon={"seat-outline"} />
+                  <Features
+                    number={s.features.battery}
+                    icon={"battery-outline"}
+                  />
+                  <Features number={s.features.drivetrain} icon={"abacus"} />
                 </View>
 
                 <View className="flex-row gap-3 items-end mt-5">
                   <Text className="font-semibold text-white text-xl">
-                    Starting at {s.price}
+                    Starting at {formatToDollar(s.dealerPrice)}
                   </Text>
                   <Text className="text-secondary text-base line-through">
-                    {s.discount}
+                    {formatToDollar(s.manufacturedPrice)}
                   </Text>
                 </View>
               </Pressable>

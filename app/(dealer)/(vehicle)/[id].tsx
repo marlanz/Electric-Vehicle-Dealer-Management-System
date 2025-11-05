@@ -6,7 +6,7 @@ import React from "react";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const vehicleDetail = {
+export const vehicleDetail = {
   id: 1,
   model: "Vinfast VF7 Limited Edition",
   brand: "Tesla",
