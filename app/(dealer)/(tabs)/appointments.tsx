@@ -1,7 +1,7 @@
 import CustomDivider from "@/src/components/ui/CustomDivider";
 import CustomPrice from "@/src/components/ui/CustomPrice";
 import { color } from "@/src/constants";
-import { Feather, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import cn from "clsx";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -27,7 +27,7 @@ const quotations = [
     version: "Long Range",
     createdAt: "20/10/2024",
     staff: "John Doe",
-    status: "Approved",
+    status: "Scheduled",
     price: "$ 52,990.00",
   },
   {
@@ -38,7 +38,7 @@ const quotations = [
     version: "Performance",
     createdAt: "22/10/2024",
     staff: "Emily Carter",
-    status: "Pending",
+    status: "Cancelled",
     price: "$ 52,990.00",
   },
   {
@@ -49,27 +49,24 @@ const quotations = [
     version: "Standard Range",
     createdAt: "25/10/2024",
     staff: "David Nguyen",
-    status: "Rejected",
+    status: "Completed",
     price: "$ 52,990.00",
   },
 ];
 
 const parseStatusToColor = (status: string) => {
   switch (status.toLowerCase()) {
-    case "approved":
+    case "completed":
       return "text-[#16D68F] bg-[#16D68F]/[0.1]";
 
     case "pending":
       return "text-[#F9C74F] bg-[#F9C74F]/[0.1]";
 
-    case "rejected":
-      return "text-[#FF6B6B] bg-[#FF6B6B]/[0.1]";
-
-    case "draft":
+    case "scheduled":
     case "created":
       return "text-[#61B1FF] bg-[#61B1FF]/[0.1]";
 
-    case "expired":
+    case "dismissed":
     case "cancelled":
       return "text-[#959CA7] bg-[#959CA7]/[0.1]";
 
@@ -78,7 +75,7 @@ const parseStatusToColor = (status: string) => {
   }
 };
 
-const Quotations = () => {
+const Appointments = () => {
   const [selected, setSelected] = useState(1);
 
   return (
@@ -87,7 +84,7 @@ const Quotations = () => {
         <View className="pb-6">
           <View className="flex-row justify-between py-5">
             <Text className="text-2xl font-semibold text-white">
-              My Quotations
+              Test Drive Appointments
             </Text>
           </View>
 
@@ -153,19 +150,17 @@ const Quotations = () => {
               <View className="gap-4">
                 {/* header */}
                 <View className="flex-row gap-[10px] items-start">
-                  <Feather
-                    name="file-text"
+                  <Ionicons
+                    name="car-outline"
                     size={24}
                     color={"white"}
                     className="p-[10px] bg-[#1C354C] self-start rounded-[10px]"
                   />
                   <View className="flex-1">
                     <Text className="text-white text-lg font-semibold">
-                      {item.id}
+                      {item.customerName}
                     </Text>
-                    <Text className="mt-1 text-base text-secondary font-medium">
-                      Customer: {item.customerName}
-                    </Text>
+
                     <Text
                       className="text-sm text-secondary font-medium mt-1"
                       numberOfLines={1}
@@ -176,6 +171,11 @@ const Quotations = () => {
                 </View>
                 <CustomDivider />
                 <View className="gap-4">
+                  <CustomPrice
+                    title="Location"
+                    value={"Showroom Vinfast Go Vap"}
+                    valueStyles="text-white max-w-[200px]"
+                  />
                   <CustomPrice
                     title="Date Created"
                     value={item.createdAt}
@@ -194,9 +194,6 @@ const Quotations = () => {
                   />
                 </View>
               </View>
-              <Text className="mt-6 text-2xl font-semibold text-green-200">
-                Total Price: {item.price}
-              </Text>
             </Pressable>
           )}
           contentContainerClassName=" gap-4 "
@@ -207,4 +204,4 @@ const Quotations = () => {
   );
 };
 
-export default Quotations;
+export default Appointments;
