@@ -35,7 +35,7 @@ const Vehicles = () => {
         <View className="pb-6">
           <View className="flex-row justify-between py-5">
             <Text className="text-2xl font-semibold text-white">
-              Vehicles Catalog
+              Vehicles in evm
             </Text>
             <Ionicons name="heart-outline" size={24} color={"white"} />
           </View>
