@@ -40,6 +40,22 @@ export const login = createAsyncThunk<LoginResponse, LoginPayload>(
 //     setAuthToken(null);
 //   }
 // );
+export const fetchProfile = createAsyncThunk<User>(
+  "auth/fetchProfile",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await http.get("/auth/profile"); // GET /api/v1/auth/profile
+      const user = res.data?.data?.user;
+      if (!user) throw new Error("Empty profile");
+      // Đồng bộ storage (để lần sau bootstrap có đủ user)
+      const saved = await storage.get<any>(AUTH_KEY);
+      await storage.set(AUTH_KEY, { ...(saved ?? {}), user });
+      return user as User;
+    } catch (e: any) {
+      return rejectWithValue(e?.message || "Fetch profile failed");
+    }
+  }
+);
 
 const initialState: AuthState = {
   user: null,
@@ -87,6 +103,16 @@ const slice = createSlice({
     b.addCase(login.rejected, (s, a) => {
       s.loading = false;
       s.error = a.error.message ?? "Login failed";
+    });
+    b.addCase(fetchProfile.pending, (s) => {
+      s.error = null;
+      // không bật global loading để UI mượt hơn
+    });
+    b.addCase(fetchProfile.fulfilled, (s, a) => {
+      s.user = a.payload;
+    });
+    b.addCase(fetchProfile.rejected, (s, a) => {
+      s.error = (a.payload as string) ?? a.error.message ?? "Fetch profile failed";
     });
   },
 });
