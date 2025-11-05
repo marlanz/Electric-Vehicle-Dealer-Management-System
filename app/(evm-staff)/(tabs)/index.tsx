@@ -211,7 +211,7 @@ const Home = () => {
           </View>
 
           {/* Test drive appointments */}
-          <Text className="mt-6 font-bold text-white text-xl mb-3">
+          {/* <Text className="mt-6 font-bold text-white text-xl mb-3">
             My Test Drive Appointments
           </Text>
 
@@ -252,9 +252,9 @@ const Home = () => {
                 />
               </View>
             ))}
-          </View>
+          </View> */}
 
-          <Text className="mt-10 font-bold text-white text-xl mb-3">
+          {/* <Text className="mt-10 font-bold text-white text-xl mb-3">
             My Inventory
           </Text>
 
@@ -297,7 +297,7 @@ const Home = () => {
                 </View>
               </Pressable>
             ))}
-          </View>
+          </View> */}
         </ScrollView>
       </SafeAreaView>
     </View>

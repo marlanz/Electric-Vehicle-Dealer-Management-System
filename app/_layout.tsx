@@ -26,6 +26,7 @@ function BootstrapGate({ children }: { children: React.ReactNode }) {
       setAuthToken(token);
     });
   }, [dispatch]);
+  
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-[#0B1220]">

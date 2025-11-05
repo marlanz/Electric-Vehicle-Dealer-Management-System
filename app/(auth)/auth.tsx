@@ -1,9 +1,10 @@
-import { login, persistAuth, selectAuth } from "@/src/features/auth/authSlice";
-import { http } from "@/src/services/http";
+// app/(auth)/auth.tsx
+import { login, persistAuth, selectAuth,selectUser } from "@/src/features/auth/authSlice";
+import { http, setAuthToken } from "@/src/services/http";
 import { useAppDispatch, useAppSelector } from "@/src/store";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { router } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { ToastAndroid } from "react-native";
 import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from "react-native";
@@ -37,13 +38,13 @@ const GhostButton = ({ title, onPress }: { title: string; onPress: () => void })
 
 //schemas
 const loginSchema = yup.object({
-  email: yup.string().email("Email không hợp lệ").required("Bắt buộc"),
+  email: yup.string().required("Bắt buộc"),
   password: yup.string().min(6, "Tối thiểu 6 ký tự").required("Bắt buộc"),
 });
 
 const registerSchema = yup.object({
   fullName: yup.string().min(2, "Nhập tên hợp lệ").required("Bắt buộc"),
-  email: yup.string().email("Email không hợp lệ").required("Bắt buộc"),
+  email: yup.string().required("Bắt buộc"),
   password: yup.string().min(6, "Tối thiểu 6 ký tự").required("Bắt buộc"),
   confirmPassword: yup
     .string()
@@ -61,7 +62,10 @@ export default function AuthUnifiedScreen() {
   const isLogin = mode === "login";
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector(selectAuth);
-
+  const user = useAppSelector(selectUser);
+  const token = useAppSelector((state) => state.auth.token);
+  console.log('[user]',user);
+  console.log('[token]',token);
   const resolver = useMemo(() => yupResolver(isLogin ? loginSchema : registerSchema), [isLogin]);
 
   const { control, handleSubmit, formState: { errors } } = useForm<FormValues>({
@@ -74,28 +78,20 @@ export default function AuthUnifiedScreen() {
   const cta = isLogin ? "Sign In" : "Sign Up";
 
   const onSubmit = async (values: any) => {
+    if (loading) return;
     try {
-      if (isLogin) {
         const res = await dispatch(login({ email: values.email, password: values.password })).unwrap();
         console.log('đăng nhập nè')
         await persistAuth(res);
-      } 
-      // else {
-      //   await http.post("/auth/register", {
-      //     fullName: values.fullName,
-      //     email: values.email,
-      //     password: values.password,
-      //   });
-      //   const res = await dispatch(login({ email: values.email, password: values.password })).unwrap();
-      //   await persistAuth(res);
-      // }
-      router.replace("/");
+     
     } catch (err: any) {
       console.warn("Auth error:", err?.message ?? err);
       ToastAndroid.show(`Error: ${err?.message ?? err}`, ToastAndroid.LONG);
     }
   };
-
+  useEffect(() => {
+    setAuthToken(null); // ✨ đảm bảo request login không dính Bearer cũ
+  }, []);
   return (
     <KeyboardAvoidingView behavior={Platform.select({ ios: "padding" })} className="flex-1">
       <View className="flex-1 bg-[#3b5cff]">

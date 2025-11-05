@@ -2,73 +2,63 @@
 import axios from "axios";
 import { storage } from "./storage";
 import { FIXED_DEALER_ID } from "../utils/dealer";
-let didLogout = false;
-let onAuthFail: (() => void) | null = null;
-export const setOnAuthFail = (fn: () => void) => (onAuthFail = fn);
-
-// ✅ NEW: callback khi refresh thành công (để nơi khác dispatch + persist)
-let onTokenRefreshed: ((token: string, refreshToken?: string | null) => void) | null = null;
-export const setOnTokenRefreshed = (fn: (t: string, rt?: string | null) => void) => (onTokenRefreshed = fn);
 
 export const http = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API,
   timeout: 20000,
 });
 
-// instance riêng cho refresh để tránh đệ quy interceptor
+// refresh instance riêng
 const refreshHttp = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API,
   timeout: 20000,
 });
 
-http.interceptors.request.use(async (config) => {
-  const { method, url, baseURL } = config;
-  console.log(`[HTTP ->] ${method?.toUpperCase()} ${baseURL}${url}`);
-  return config;
-});
-function enforceDealerId(obj: any) {
-  if (!obj || typeof obj !== "object") return;
-  if ("dealer_id" in obj) {
-    // luôn ép theo yêu cầu
-    obj.dealer_id = FIXED_DEALER_ID;
-  }
+function isAuthRouteUrl(u?: string) {
+  const url = (u || "").toLowerCase();
+  return (
+    url.includes("/auth/auth")
+  );
 }
 
+function enforceDealerId(obj: any) {
+  if (!obj || typeof obj !== "object") return;
+  if ("dealer_id" in obj) obj.dealer_id = FIXED_DEALER_ID;
+}
+
+// ✅ Duy nhất 1 request interceptor, có guard cho /auth/*
 http.interceptors.request.use((config) => {
-  // Nếu API này có params hoặc data chứa dealer_id, ép lại giá trị
-  if (config.params) enforceDealerId(config.params);
-  if (config.data) enforceDealerId(config.data);
+  const { method, url, baseURL } = config;
+  console.log(`[HTTP ->] ${method?.toUpperCase()} ${baseURL}${url}`);
 
-  // Nếu muốn mặc định thêm dealer_id cho các GET có query “thường có dealer_id”:
-  // (ví dụ /orders, /quotes, /customers…) mà client quên set
-  const url = (config.url || "").toLowerCase();
-  const likelyNeedDealerId =
-    url.includes("/orders") || url.includes("/quotes") || url.includes("/customers");
-
-  if (likelyNeedDealerId) {
-    // Nếu chưa có params thì tạo
-    if (!config.params) config.params = {};
-    if (!("dealer_id" in config.params)) {
-      config.params.dealer_id = FIXED_DEALER_ID;
-    }
+  // ✅ Auth routes phải sạch header
+  if (isAuthRouteUrl(config.url)) {
+    if (config.headers) delete (config.headers as any).Authorization;
+    return config;
   }
-
   return config;
 });
+
+// --- Response interceptor giữ nguyên skip cho auth + refresh cho non-auth ---
+let didLogout = false;
 http.interceptors.response.use(
   (res) => {
-    // ✅ LOG RESPONSE SUCCESS
     const m = res.config.method?.toUpperCase();
     const u = (res.config.baseURL ?? "") + (res.config.url ?? "");
     console.log(`[HTTP <-] ${m} ${u} - ${res.status}`);
-    // nếu muốn xem body:
     try { console.log("[HTTP <-] data:", JSON.stringify(res.data)); } catch {}
     return res;
   },
   async (err) => {
-    const status = err?.response?.status;
     const original = err?.config || {};
+    const status = err?.response?.status;
     if (!status) return Promise.reject(err);
+
+    // ❗ không refresh/đăng xuất khi lỗi thuộc /auth/*
+    if (isAuthRouteUrl(original.url)) {
+      console.log("⚠️ Auth route error, skip refresh:", status, (original.url || "").toLowerCase());
+      return Promise.reject(err);
+    }
 
     if ((status === 401 || status === 403) && !original._retry) {
       try {
@@ -77,32 +67,35 @@ http.interceptors.response.use(
         if (!newToken) throw new Error("REFRESH_FAILED");
         original.headers = { ...(original.headers || {}), Authorization: `Bearer ${newToken}` };
         return http(original);
-      } catch (e) {
+      } catch {
         console.log("🔒 Refresh failed → logout");
         if (!didLogout) {
           didLogout = true;
           onAuthFail?.();
-          // xóa header để các request sau không spam
           setAuthToken(null);
-          setTimeout(() => { didLogout = false; }, 1000); // reset sau 1s
+          setTimeout(() => { didLogout = false; }, 800);
         }
         return Promise.reject(err);
       }
     }
-
     return Promise.reject(err);
   }
 );
+
+let onAuthFail: (() => void) | null = null;
+export const setOnAuthFail = (fn: () => void) => (onAuthFail = fn);
+
+let onTokenRefreshed: ((token: string, refreshToken?: string | null) => void) | null = null;
+export const setOnTokenRefreshed = (fn: (t: string, rt?: string | null) => void) => (onTokenRefreshed = fn);
 
 export const setAuthToken = (token?: string | null) => {
   if (token) http.defaults.headers.common.Authorization = `Bearer ${token}`;
   else delete http.defaults.headers.common.Authorization;
 };
 
-/* ------------ Refresh core (không import store/authSlice) ------------ */
+/* ------------ Refresh core ------------ */
 let isRefreshing = false;
 let waiters: Array<(t: string) => void> = [];
-
 function notify(t: string) { waiters.forEach((cb) => cb(t)); waiters = []; }
 
 async function getPersistedAuth() {
@@ -121,30 +114,26 @@ async function refreshAccessToken(): Promise<string | null> {
     const refreshToken = saved?.refreshToken ?? null;
     if (!refreshToken) throw new Error("NO_REFRESH_TOKEN");
 
-    // 🚩 TUỲ BACKEND: điều chỉnh key body / field response cho đúng
     const res = await refreshHttp.post("/auth/refresh", { refreshToken });
 
     const newToken =
-      res.data?.data?.accessToken ??       // <-- accessToken nằm trong data
-      res.data?.accessToken ??             // (phòng trường hợp server đổi)
+      res.data?.data?.accessToken ??
+      res.data?.accessToken ??
       res.data?.token ?? null;
+
     const newRefresh =
       res.data?.data?.refreshToken ?? res.data?.refreshToken ?? null;
 
     if (!newToken) throw new Error("NO_TOKEN_IN_REFRESH_RESPONSE");
 
-    // 1) set header cho axios
     setAuthToken(newToken);
-    // 2) lưu storage (để app khởi động lại vẫn dùng token mới)
     await setPersistedAuthToken(newToken, newRefresh ?? undefined);
-    // 3) báo cho app (Redux) cập nhật state
     onTokenRefreshed?.(newToken, newRefresh ?? undefined);
-    // 4) giải phóng các request pending
     notify(newToken);
 
     isRefreshing = false;
     return newToken;
-  } catch (e) {
+  } catch {
     isRefreshing = false;
     waiters = [];
     return null;

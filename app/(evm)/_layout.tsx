@@ -1,8 +1,8 @@
-// app/(evm-staff)/_layout.tsx
+// app/(evm)/_layout.tsx
 import { Stack } from "expo-router";
 import React from "react";
 
-export default function evmStaffRootLayout() {
+export default function EVMRootLayout() {
   return (
     <Stack
       screenOptions={{
@@ -11,9 +11,7 @@ export default function evmStaffRootLayout() {
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="vehicle" options={{ headerShown: false }} />
-      <Stack.Screen name="(orders)" options={{ headerShown: false }} />
-      <Stack.Screen name="promotions" options={{ headerShown: false }} />
+      <Stack.Screen name="user" options={{ headerShown: false }} />
     </Stack>
   );
 }

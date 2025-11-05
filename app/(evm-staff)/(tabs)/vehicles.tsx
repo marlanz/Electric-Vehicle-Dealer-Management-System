@@ -1,141 +1,129 @@
-import Features from "@/src/components/ui/CustomFeatures";
-import { color } from "@/src/constants";
-import { Ionicons } from "@expo/vector-icons";
-import cn from "clsx";
-import { router } from "expo-router";
-import React, { useState } from "react";
-import {
-  FlatList,
-  Image,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { modelStock } from ".";
+// import Features from "@/src/components/ui/CustomFeatures";
+// import { color } from "@/src/constants";
+// import { Ionicons } from "@expo/vector-icons";
+// import { router } from "expo-router";
+// import React, { useEffect, useState } from "react";
+// import {
+//   ActivityIndicator,
+//   Alert,
+//   FlatList,
+//   Image,
+//   Pressable,
+//   Text,
+//   View,
+// } from "react-native";
+// import { SafeAreaView } from "react-native-safe-area-context";
+// import axios from "axios";
 
-const brands = [
-  {
-    id: 1,
-    name: "All brands",
-  },
-  { id: 2, name: "Tesla" },
-  { id: 3, name: "BYD" },
-  { id: 4, name: "Vinfast" },
-  { id: 5, name: "Honda" },
-];
+// const API = "https://690a30bc1a446bb9cc21ba77.mockapi.io";
+// const FALLBACK_IMG =
+//   "https://i.pinimg.com/1200x/d5/da/11/d5da11d9d023a866c2999c9c7c54b333.jpg";
 
-const Vehicles = () => {
-  const [selected, setSelected] = useState(1);
+// type MockVehicle = {
+//   id: string;
+//   model?: string;
+//   brand?: string;
+//   version?: string;
+//   color?: string;
+//   year?: string | number;
+//   manufacturedPrice?: number;
+//   dealerPrice?: number;
+//   description?: string;
+//   imageURL?: string;
+//   features?: { motor?: string; seats?: number | null; battery?: string; drivetrain?: string };
+//   stock?: number | null;
+//   createAt?: number;
+// };
 
-  return (
-    <View style={{ backgroundColor: color.backgroundPrimary, flex: 1 }}>
-      <SafeAreaView className="px-4 ">
-        <View className="pb-6">
-          <View className="flex-row justify-between py-5">
-            <Text className="text-2xl font-semibold text-white">
-              Vehicles Catalog
-            </Text>
-            <Ionicons name="heart-outline" size={24} color={"white"} />
-          </View>
+// export default function VehiclesTab() {
+//   const [items, setItems] = useState<MockVehicle[]>([]);
+//   const [loading, setLoading] = useState(true);
 
-          <View className="p-3 bg-gray rounded-[10px] flex-row items-center gap-3">
-            <Ionicons
-              name="search-outline"
-              size={24}
-              color={color.textSecondary}
-            />
-            <TextInput
-              placeholder="Search by model or VIN..."
-              className="font-medium text-secondary text-xl flex-1 pb-1"
-              placeholderTextColor={color.textSecondary}
-              // value={search.name}
-              // onChangeText={handleChange}
-              // onSubmitEditing={handleSearch}
-              returnKeyType="search"
-              // ref={inputRef}
-              autoFocus={true}
-            />
-          </View>
-          <FlatList
-            data={brands}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => {
-              const isActive = selected === item.id;
+//   useEffect(() => {
+//     let cancelled = false;
+//     (async () => {
+//       try {
+//         setLoading(true);
+//         const res = await axios.get(`${API}/vehicles`, { headers: { "Cache-Control": "no-cache" }});
+//         console.log('[data vehicle]',res.data.items)
+        
+//         const list = res.data.items;
+//         console.log('[data list]',list)
+//         const sorted = [...list].sort((a, b) => Number(b.createAt ?? 0) - Number(a.createAt ?? 0));
+      
+//         if (!cancelled) setItems(list);
+//       } catch (e: any) {
+//         Alert.alert("Error", e?.message ?? "Load vehicles failed");
+//       } finally {
+//         if (!cancelled) setLoading(false);
+//       }
+//     })();
+//     return () => { cancelled = true; };
+//   }, []);
 
-              return (
-                <Pressable
-                  onPress={() => setSelected(item.id)}
-                  className={cn(
-                    "px-4 py-[10px] rounded-[10px] ",
-                    isActive ? "bg-blue" : "bg-gray border-gray-700"
-                  )}
-                >
-                  <Text
-                    className={cn(
-                      "font-semibold text-base",
-                      isActive ? "text-white" : "text-secondary"
-                    )}
-                  >
-                    {item.name}
-                  </Text>
-                </Pressable>
-              );
-            }}
-            contentContainerClassName="gap-3 mt-4"
-            // style={{ overflow: "visible" }}
-          />
-        </View>
+//   return (
+//     <View style={{ backgroundColor: color.backgroundPrimary, flex: 1 }}>
+//       <SafeAreaView className="px-4 ">
+//         {/* Header */}
+//         <View className="flex-row justify-between py-5">
+//           <Text className="text-2xl font-semibold text-white">Vehicles Catalog</Text>
+//           <Pressable
+//             onPress={() => router.push("/(evm-staff)/vehicle/create")}
+//             hitSlop={8}
+//             className="flex-row items-center"
+//           >
+//             <Ionicons name="add-circle-outline" size={26} color={"white"} />
+//           </Pressable>
+//         </View>
 
-        <FlatList
-          data={modelStock}
-          keyExtractor={(item) => item.id.toString()}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <Pressable onPress={() => router.push(`/(vehicle)/${item.id}`)}>
-              <View className="flex-1 rounded-[15px] overflow-hidden bg-gray p-5">
-                <Image
-                  source={{ uri: item.img }}
-                  resizeMode="cover"
-                  className="w-full h-[200px] rounded-[15px]"
-                />
-                <View className="mt-3 mb-2">
-                  <View className="justify-between flex-row items-center">
-                    <Text className="text-xl font-semibold text-white">
-                      {item.model}
-                    </Text>
-                    <Text className="text-base font-medium text-secondary">
-                      {item.brand}
-                    </Text>
-                  </View>
-                </View>
-                <View className="flex-row justify-between">
-                  <Features number={item.maxDistance} icon={"engine-outline"} />
-                  <Features number={item.seat} icon={"seat-outline"} />
-                  <Features number={item.stock} icon={"battery-outline"} />
-                  <Features number={item.drivetrain} icon={"abacus"} />
-                </View>
-
-                <View className="flex-row gap-3 items-end mt-5">
-                  <Text className="font-semibold text-white text-xl">
-                    Starting at {item.price}
-                  </Text>
-                  <Text className="text-secondary text-base line-through">
-                    {item.discount}
-                  </Text>
-                </View>
-              </View>
-            </Pressable>
-          )}
-          contentContainerClassName=" gap-3 "
-          contentContainerStyle={{ paddingBottom: 190 }}
-        />
-      </SafeAreaView>
-    </View>
-  );
-};
-
-export default Vehicles;
+//         {loading ? (
+//           <View className="flex-1 items-center justify-center">
+//             <ActivityIndicator />
+//             <Text className="text-white/70 mt-2">Loading…</Text>
+//           </View>
+//         ) : (
+//           <FlatList
+//             data={items}
+//             keyExtractor={(item) => String(item.id)}
+//             showsVerticalScrollIndicator={false}
+//             renderItem={({ item }) => (
+//               <Pressable onPress={() => router.push(`/(evm-staff)/vehilce/${item.id}`)}>
+//                 <View className="flex-1 rounded-[15px] overflow-hidden bg-gray p-5">
+//                   <Image
+//                     source={{ uri: item.imageURL || FALLBACK_IMG }}
+//                     defaultSource={{ uri: FALLBACK_IMG }}
+//                     resizeMode="cover"
+//                     className="w-full h-[200px] rounded-[15px]"
+//                   />
+//                   <View className="mt-3 mb-2">
+//                     <View className="justify-between flex-row items-center">
+//                       <Text className="text-xl font-semibold text-white">{item.model ?? "—"}</Text>
+//                       <Text className="text-base font-medium text-secondary">{item.brand ?? "—"}</Text>
+//                     </View>
+//                   </View>
+//                   <View className="flex-row justify-between">
+//                     <Features number={item.features?.motor ?? "—"} icon={"engine-outline"} />
+//                     <Features number={item.features?.seats ?? "—"} icon={"seat-outline"} />
+//                     <Features number={item.features?.battery ?? "—"} icon={"battery-outline"} />
+//                     <Features number={item.features?.drivetrain ?? "—"} icon={"abacus"} />
+//                   </View>
+//                   <View className="flex-row gap-3 items-end mt-5">
+//                     <Text className="font-semibold text-white text-xl">
+//                       Starting at {item.dealerPrice != null ? `$${item.dealerPrice}` : "—"}
+//                     </Text>
+//                     <Text className="text-secondary text-base line-through">
+//                       {item.manufacturedPrice != null ? `$${item.manufacturedPrice}` : ""}
+//                     </Text>
+//                   </View>
+//                 </View>
+//               </Pressable>
+//             )}
+//             contentContainerClassName=" gap-3 "
+//             contentContainerStyle={{ paddingBottom: 190 }}
+//             ListEmptyComponent={<Text className="text-white/60 text-center py-16">No vehicles</Text>}
+//           />
+//         )}
+//       </SafeAreaView>
+//     </View>
+//   );
+// }

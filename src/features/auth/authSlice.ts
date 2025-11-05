@@ -33,13 +33,14 @@ export const login = createAsyncThunk<LoginResponse, LoginPayload>(
   }
 );
 
-// export const logout = createAsyncThunk<void, void>(
-//   "auth/logout",
-//   async () => {
-//     await storage.del(AUTH_KEY);
-//     setAuthToken(null);
-//   }
-// );
+export const logoutAsync = createAsyncThunk<void, void>(
+  "auth/logoutAsync",
+  async () => {
+    // làm side-effects ở đây
+    await storage.del(AUTH_KEY);
+    setAuthToken(null);
+  }
+);
 export const fetchProfile = createAsyncThunk<User>(
   "auth/fetchProfile",
   async (_, { rejectWithValue }) => {
@@ -74,8 +75,6 @@ const slice = createSlice({
       state.token = null;
       state.error = null;
       state.refreshToken = null;
-      storage.del(AUTH_KEY);
-      setAuthToken(null);
     },
     setTokens(state, action: { payload: { token: string; refreshToken?: string | null } }) {
       state.token = action.payload.token;
@@ -113,6 +112,12 @@ const slice = createSlice({
     });
     b.addCase(fetchProfile.rejected, (s, a) => {
       s.error = (a.payload as string) ?? a.error.message ?? "Fetch profile failed";
+    });
+    b.addCase(logoutAsync.fulfilled, (s) => {
+      s.user = null;
+      s.token = null;
+      s.error = null;
+      s.refreshToken = null;
     });
   },
 });

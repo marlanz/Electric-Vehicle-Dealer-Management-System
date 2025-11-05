@@ -35,21 +35,13 @@ const Layout = () => {
             ),
           }}
         />
+        
         <Tabs.Screen
-          name="vehicles"
+          name="staffManager"
           options={{
-            title: "Vehicles",
+            title: "Staff Manager",
             tabBarIcon: ({ color, size }) => (
-              <Feather name="truck" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="promotions"
-          options={{
-            title: "Promotions",
-            tabBarIcon: ({ color, size }) => (
-              <Feather name="tag" size={size} color={color} />
+              <Feather name="user" size={size} color={color} />
             ),
           }}
         />
@@ -62,7 +54,6 @@ const Layout = () => {
             ),
           }}
         />
-
       </Tabs>
     </>
   );
