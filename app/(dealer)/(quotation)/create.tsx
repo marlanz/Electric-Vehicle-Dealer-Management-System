@@ -1,11 +1,11 @@
 import CustomButton from "@/src/components/ui/CustomButton";
-import CustomerPickerModal from "@/src/components/ui/CustomerPickerModal";
+import CustomDivider from "@/src/components/ui/CustomDivider";
 import CustomModelSpecs from "@/src/components/ui/CustomModelSpecs";
-import DateTimeInput from "@/src/components/ui/DateTimeInput ";
+import CustomPrice from "@/src/components/ui/CustomPrice";
 import { color, images } from "@/src/constants";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -16,7 +16,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const vehicleDetail = {
@@ -38,30 +37,7 @@ const vehicleDetail = {
   desc: "Vinfast VF7 is a high-performance electric sedan with unparallel rage and exhilirating acceleration",
 };
 
-export const customers = [
-  {
-    id: "CUS-001",
-    name: "Nguyễn Minh Sang",
-    phone: "+84 98738726",
-    email: "sang.nguyen@example.com",
-  },
-  {
-    id: "CUS-002",
-    name: "Trần Thu Hà",
-    phone: "+84 912345678",
-    email: "ha.tran@example.com",
-  },
-  {
-    id: "CUS-003",
-    name: "Lê Hoàng Dũng",
-    phone: "+84 988222111",
-    email: "dung.le@example.com",
-  },
-];
-
-const CreateAppointment = () => {
-  const [showCustomerModal, setShowCustomerModal] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState(customers[0]);
+const CreateQuotation = () => {
   return (
     <SafeAreaView className="flex-1 px-4">
       <View className="flex-row justify-between py-5">
@@ -69,7 +45,7 @@ const CreateAppointment = () => {
           <Ionicons name="arrow-back-outline" size={24} color={"white"} />
         </Pressable>
         <Text className="text-2xl font-semibold text-white">
-          Create Appointment
+          Create Quotation
         </Text>
         <Pressable>
           <Ionicons name="heart-outline" size={24} color={"white"} />
@@ -80,10 +56,10 @@ const CreateAppointment = () => {
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         // style={{ flex: 1 }}
-        // keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <ScrollView
-          contentContainerClassName="gap-5 "
+          contentContainerClassName=" gap-5 pb-6"
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: 78 }}
@@ -92,46 +68,41 @@ const CreateAppointment = () => {
           <View className="p-[15px] bg-gray rounded-[10px]">
             <View className="flex-row justify-between mb-5">
               <View className="flex-row gap-2 items-center">
-                <Ionicons name="person-outline" size={24} color="white" />
+                <Ionicons
+                  name="person-outline"
+                  size={24}
+                  color={color.iconColor}
+                />
                 <Text className="font-semibold text-xl text-white">
                   Customer Information
                 </Text>
               </View>
-
-              <Pressable onPress={() => setShowCustomerModal(true)}>
-                <AntDesign name="user-switch" size={24} color="white" />
-              </Pressable>
+              <Text className="text-[#16D68F] font-medium textbase px-[10px] py-[5px] bg-[#16D68F]/[0.1] rounded-[8px]">
+                Verified
+              </Text>
             </View>
-
-            <View className="flex-row gap-4 items-center">
-              <Image
-                source={images.avt_placeholder}
-                className="size-[65px] rounded-full"
-              />
-
-              <View>
-                <Text className="font-medium text-xl text-white">
-                  {selectedCustomer.name}
-                </Text>
-                <Text className="text-secondary text-base">
-                  {selectedCustomer.phone}
-                </Text>
-                <Text className="text-secondary text-base">
-                  {selectedCustomer.email}
-                </Text>
+            <View className="flex-row justify-between items-center">
+              <View className="flex-row gap-4">
+                <Image
+                  source={images.avt_placeholder}
+                  className="size-[65px] rounded-full"
+                  resizeMode="contain"
+                />
+                <View>
+                  <Text className="font-medium text-xl text-white">
+                    Nguyễn Minh Sang
+                  </Text>
+                  <Text className="mt-1 text-secondary font-medium text-base">
+                    +84 98738726
+                  </Text>
+                  <Text className="text-secondary font-medium text-base mt-1">
+                    johndoe.test@gmail.com
+                  </Text>
+                </View>
               </View>
+              <AntDesign name="user-switch" size={24} color="white" />
             </View>
           </View>
-
-          <CustomerPickerModal
-            visible={showCustomerModal}
-            customers={customers}
-            onClose={() => setShowCustomerModal(false)}
-            onSelect={(customer) => {
-              setSelectedCustomer(customer);
-              setShowCustomerModal(false);
-            }}
-          />
           {/* Vehicle info */}
           <View className="p-[15px] bg-gray rounded-[10px]">
             <View className="flex-row justify-between mb-5">
@@ -210,7 +181,7 @@ const CreateAppointment = () => {
               </View>
             </View>
           </View>
-          {/* Appointment details */}
+          {/* Pricing */}
           <View className="p-[15px] bg-gray rounded-[10px]">
             {/* Header */}
             <View className="flex-row justify-between mb-5">
@@ -221,28 +192,49 @@ const CreateAppointment = () => {
                   color={color.iconColor}
                 />
                 <Text className="font-semibold text-xl text-white">
-                  Appointment Details
+                  Pricing & Discounts
                 </Text>
               </View>
             </View>
             {/* Body */}
             <View className="gap-5">
-              <DateTimeInput />
-              <View className="gap-2 flex-1">
-                <Text className="font-medium text-base text-secondary">
-                  Test Drive Location
-                </Text>
-                <View className="p-4  bg-dark rounded-[10px] border border-secondary flex-row justify-between items-center">
-                  <View className="gap-1">
-                    <Text className="font-semibold text-white text-lg">
-                      Showroom Vinfast Go Vap
-                    </Text>
-                    <Text className="font-medium text-secondary text-base">
-                      123 Nguyen Van Luong, P.11, Q.Go Vap
-                    </Text>
-                  </View>
-                  <Ionicons name="location-outline" size={24} color="white" />
+              <View className="flex-row gap-4">
+                <View className="gap-1 flex-1">
+                  <Text className="font-medium text-base text-secondary">
+                    On-Road Price
+                  </Text>
+                  <Text className="font-semibold text-white text-xl px-3 py-[14px] bg-dark rounded-[10px] border border-secondary">
+                    {vehicleDetail.price}
+                  </Text>
                 </View>
+
+                <View className="gap-1 flex-1">
+                  <Text className="font-medium text-base text-secondary">
+                    Discount
+                  </Text>
+                  <Text className="font-semibold text-white text-xl px-3 py-[14px] bg-dark rounded-[10px] border border-secondary">
+                    {vehicleDetail.price}
+                  </Text>
+                </View>
+              </View>
+              <View className="p-[15px] bg-dark rounded-[10px] gap-4">
+                <CustomPrice
+                  title="Subtotal"
+                  value={vehicleDetail.price}
+                  valueStyles="text-white text-lg"
+                />
+                <CustomPrice
+                  title="Discount"
+                  value={`- $2,000`}
+                  valueStyles="text-[#16D68F]  text-lg"
+                />
+                <CustomDivider />
+                <CustomPrice
+                  title="Total Price"
+                  value={`$ 52,990`}
+                  valueStyles="text-white  text-xl"
+                  titleStyles="text-white font-semibold text-xl"
+                />
               </View>
             </View>
           </View>
@@ -297,4 +289,4 @@ const CreateAppointment = () => {
   );
 };
 
-export default CreateAppointment;
+export default CreateQuotation;

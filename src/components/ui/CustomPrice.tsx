@@ -16,7 +16,7 @@ const CustomPrice = ({
   titleStyles,
 }: CustomPriceProps) => {
   return (
-    <View className="flex-row justify-between items-start ">
+    <View className="flex-row justify-between items-start flex-1">
       <Text
         className={cn(
           "",
@@ -25,7 +25,9 @@ const CustomPrice = ({
       >
         {title}
       </Text>
-      <Text className={cn("font-semibold", valueStyles)}>{value}</Text>
+      <Text className={cn("font-semibold", valueStyles)} numberOfLines={1}>
+        {value}
+      </Text>
     </View>
   );
 };

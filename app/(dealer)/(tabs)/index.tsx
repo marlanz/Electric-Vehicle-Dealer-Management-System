@@ -1,288 +1,307 @@
-// app/(dealer)/(tabs)/index.tsx  (DealerHome)
-import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View, StyleSheet } from "react-native";
-import { Feather } from "@expo/vector-icons";
-import { router, type Href } from "expo-router";
-import { useAppSelector } from "@/src/store";
-import { selectAuth } from "@/src/features/auth/authSlice";
+import Features from "@/src/components/ui/CustomFeatures";
+import RoundDivider from "@/src/components/ui/RoundDivider";
+import { color, images } from "@/src/constants";
+import { logout, selectAuth } from "@/src/features/auth/authSlice";
+import { useAppDispatch, useAppSelector } from "@/src/store";
+import { Ionicons } from "@expo/vector-icons";
+import axios from "axios";
+import { router } from "expo-router";
+import React, { useEffect } from "react";
+import { Image, Pressable, ScrollView, Text, View } from "react-native";
 
-type QuoteLite = {
-  id: string;
-  status: string;
-  base_price?: string;
-  final_price?: string;
-  customer_name?: string;
-  vehicle_model?: string;
-};
-type QuotesRes = { success: boolean; data?: { quotes?: QuoteLite[] } };
+import { SafeAreaView } from "react-native-safe-area-context";
 
-type VehiclesRes = {
-  success: boolean;
-  data?: { vehicles?: any[]; total?: number; page?: number; limit?: number };
-};
-
-type OrdersRes = { success: boolean; data?: { orders?: any[] } };
-
-type TestDriveLite = {
-  id: string;
-  customer_name: string;
-  vehicle_label?: string;
-  start_time?: string; // ISO datetime
-};
-type TestDrivesRes = { success: boolean; data?: { testdrives?: TestDriveLite[] } };
-
-// ---- Config route tới đúng tab group
-const ROUTES = {
-  profile: "/(dealer)/(tabs)/profile" as Href,
-  quotations: "/(dealer)/(tabs)/quotations" as Href,
-  orders: "/(dealer)/(tabs)/orders" as Href,
-  testdrives: "/(shared)/testdrives" as Href, // nếu bạn có tab riêng thì đổi lại
-} as const;
-
-const styles = StyleSheet.create({
-  card: {
-    shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 5,
+const dashboardStats = [
+  {
+    title: "Quotations",
+    desc: "My Total \nQuotations",
+    number: 38,
+    icon: "document-outline",
   },
-  pressable: { transform: [{ scale: 1 }] },
-});
+  {
+    title: "Sales",
+    desc: "My Total \nVehicales Sold",
+    number: 38,
+    icon: "cash-outline",
+  },
+  {
+    title: "Appointments",
+    desc: "Test Drive \nAppointments",
+    number: 38,
+    icon: "car-outline",
+  },
+  {
+    title: "Inventory",
+    desc: "Total Cars \nIn Stock",
+    number: 12,
+    icon: "cube-outline",
+  },
+];
 
-// tiện ích header auth
-function authHeaders(token?: string) {
-  return {
-    accept: "*/*",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+const testDriveAppointments = [
+  {
+    name: "John D. Robbin",
+    vehicle: "Cyber truck",
+    variant: "Long Range",
+    color: "Blue Navy",
+    date: "Oct 28, 2024, 10:30 AM",
+  },
+  {
+    name: "John D. Robbin",
+    vehicle: "Cyber truck",
+    variant: "Long Range",
+    color: "Blue Navy",
+    date: "Oct 28, 2024, 10:30 AM",
+  },
+  {
+    name: "John D. Robbin",
+    vehicle: "Cyber truck",
+    variant: "Long Range",
+    color: "Blue Navy",
+    date: "Oct 28, 2024, 10:30 AM",
+  },
+];
+
+export const modelStock = [
+  {
+    id: 1,
+    model: "Tesla Model S",
+    brand: "Tesla",
+    stock: "57 kWh",
+    maxDistance: "330 mil",
+    acceleration: 4.8,
+    battery: 81,
+    price: "$44,990",
+    drivetrain: "AWD",
+    seat: 5,
+    discount: "$40,290",
+    img: "https://i.pinimg.com/1200x/d5/da/11/d5da11d9d023a866c2999c9c7c54b333.jpg",
+  },
+  {
+    id: 2,
+    model: "Tesla Model S",
+    brand: "Tesla",
+    stock: "71 kWh",
+    maxDistance: "330 mil",
+    acceleration: 4.8,
+    battery: 81,
+    seat: 5,
+    price: "$44,990",
+    drivetrain: "AWD",
+    discount: "$40,290",
+    img: "https://i.pinimg.com/1200x/d5/da/11/d5da11d9d023a866c2999c9c7c54b333.jpg",
+  },
+  {
+    id: 3,
+    model: "Tesla Model S",
+    brand: "Tesla",
+    stock: "75 kWh",
+    maxDistance: "300 mil",
+    acceleration: 4.8,
+    battery: 81,
+    seat: 5,
+    price: "$44,990",
+    drivetrain: "AWD",
+    discount: "$40,290",
+    img: "https://i.pinimg.com/1200x/d5/da/11/d5da11d9d023a866c2999c9c7c54b333.jpg",
+  },
+];
+
+const Home = () => {
+  const { user, token } = useAppSelector(selectAuth);
+
+  const dispatch = useAppDispatch();
+
+  const onLogout = async () => {
+    await dispatch(logout());
+
+    router.replace("/(auth)/auth");
   };
-}
-function fmtVNDateTime(iso?: string) {
-  if (!iso) return "—";
-  try {
-    const d = new Date(iso);
-    return d.toLocaleString("vi-VN");
-  } catch {
-    return iso;
-  }
-}
-function todayISODate() {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-export default function DealerHome() {
-  const { token } = useAppSelector(selectAuth);
-
-  // Stats
-  const [quotesCount, setQuotesCount] = useState<number | null>(null);
-  const [stockCount, setStockCount] = useState<number | null>(null);
-  const [pendingOrders, setPendingOrders] = useState<number | null>(null);
-  const [appts, setAppts] = useState<TestDriveLite[] | null>(null);
-
-  const [loading, setLoading] = useState(true);
-
-  const loadAll = useCallback(async () => {
-    setLoading(true);
-    try {
-      const q = fetch(`https://electric-vehicle-dealer-management.onrender.com/api/v1/quotes`, {
-        headers: authHeaders(token ?? undefined),
-      }).then(async (r) => {
-        const j: QuotesRes = await r.json();
-        // backend chưa có total → tạm thời đếm length
-        setQuotesCount(j?.data?.quotes?.length ?? 0);
-      }).catch(() => setQuotesCount(0));
-
-      const v = fetch(
-        `https://electric-vehicle-dealer-management.onrender.com/api/v1/vehicles?status=ACTIVE&limit=1&offset=0`,
-        { headers: authHeaders(token ?? undefined) }
-      ).then(async (r) => {
-        const j: VehiclesRes = await r.json();
-        setStockCount(j?.data?.total ?? (j?.data?.vehicles?.length ?? 0));
-      }).catch(() => setStockCount(0));
-
-      const o = fetch(
-        `https://electric-vehicle-dealer-management.onrender.com/api/v1/orders?status=PENDING`,
-        { headers: authHeaders(token ?? undefined) }
-      ).then(async (r) => {
-        // Nếu API chưa có → có thể trả 404. Bắt lỗi để không vỡ UI
-        if (!r.ok) throw new Error("orders endpoint not ready");
-        const j: OrdersRes = await r.json();
-        setPendingOrders(j?.data?.orders?.length ?? 0);
-      }).catch(() => setPendingOrders(0));
-
-      const d = fetch(
-        `https://electric-vehicle-dealer-management.onrender.com/api/v1/testdrives?date=${todayISODate()}&limit=3`,
-        { headers: authHeaders(token ?? undefined) }
-      ).then(async (r) => {
-        if (!r.ok) throw new Error("testdrives endpoint not ready");
-        const j: TestDrivesRes = await r.json();
-        setAppts(j?.data?.testdrives ?? []);
-      }).catch(() => setAppts([]));
-
-      await Promise.allSettled([q, v, o, d]);
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
 
   useEffect(() => {
-    loadAll();
-  }, [loadAll]);
+    const fetchDealerInventory = async (dealerId: any) => {
+      try {
+        const response = await axios.get(
+          `https://electric-vehicle-dealer-management.onrender.com/api/v1/dealers/dealerId`,
+          {
+            params: { page: 1, limit: 50 },
+            headers: {
+              Authorization: `${token}`,
+            },
+          }
+        );
+        console.log("inventory", response);
 
-  const stats = useMemo(
-    () => [
-      { value: quotesCount, label: "My Total Quotations", icon: "file-text" as const },
-      { value: stockCount,  label: "Total Cars in Stock", icon: "car" as const },
-      { value: pendingOrders, label: "Pending Orders", icon: "shopping-bag" as const },
-      { value: appts?.length ?? 0, label: "Test Drives Today", icon: "calendar" as const },
-    ],
-    [quotesCount, stockCount, pendingOrders, appts]
-  );
+        return response.data;
+      } catch (err) {
+        console.log(err);
+      }
+    };
+    fetchDealerInventory(user?.dealer_id);
+  }, []);
 
   return (
-    <ScrollView className="flex-1 bg-[#0B1220]" contentContainerStyle={{ padding: 16 }}>
-      {/* Reload */}
-      <View className="flex-row items-center justify-between mb-3">
-        <Text className="text-white/80">Overview</Text>
-        <Pressable
-          onPress={loadAll}
-          className="px-3 py-1.5 rounded-xl bg-white/10 border border-white/15"
-        >
-          <Text className="text-white/80 text-xs">Reload</Text>
-        </Pressable>
-      </View>
-
-      {/* Stats */}
-      <View className="flex-row flex-wrap -mx-1">
-        {stats.map((s, i) => (
-          <View key={i} className="w-1/2 px-1 mb-2">
-            <View style={styles.card} className="rounded-2xl bg-white/5 border border-white/10 p-4">
-              <View className="flex-row items-center justify-between">
-                <View className="rounded-xl bg-white/10 p-2">
-                  {/* <Feather name={s.icon} size={16} color="#CFE2FF" /> */}
-                </View>
-                <Text className="text-white/50 text-xs">{s.label}</Text>
-              </View>
-              <View className="mt-3 min-h-[28px]">
-                {loading ? (
-                  <ActivityIndicator />
-                ) : (
-                  <Text className="text-white text-2xl font-bold">
-                    {typeof s.value === "number" ? s.value : "—"}
-                  </Text>
-                )}
-              </View>
+    <View
+      style={{
+        backgroundColor: color.backgroundPrimary,
+        flex: 1,
+      }}
+    >
+      <SafeAreaView className="px-4 ">
+        {/* Header */}
+        <View className="flex-row justify-between items-center py-5">
+          <View className="flex-row gap-3 items-center">
+            <Image
+              source={images.avt_placeholder}
+              className="size-[40px] rounded-full"
+              resizeMode="contain"
+            />
+            <View>
+              <Text className="font-semibold text-white text-xl">
+                Hello {user?.full_name}
+              </Text>
+              <Text className="font-medium text-secondary text-base">
+                {user?.role}
+              </Text>
             </View>
           </View>
-        ))}
-      </View>
+          <Ionicons
+            name="log-out-outline"
+            size={24}
+            color={"white"}
+            onPress={onLogout}
+          />
+        </View>
 
-      {/* Quick Actions */}
-      <SectionHeader title="Quick Actions" />
-      <View className="gap-3">
-        <ActionTile
-          icon="file-plus"
-          title="Create Quotation"
-          subtitle="Price & offer to customer"
-          onPress={() => router.push(ROUTES.quotations)}
-        />
-        <ActionTile
-          icon="shopping-cart"
-          title="Create Order"
-          subtitle="Convert quotation to sale"
-          onPress={() => router.push(ROUTES.orders)}
-        />
-        <ActionTile
-          icon="navigation-2"
-          title="Schedule Test Drive"
-          subtitle="Book a time for customer"
-          onPress={() => router.push(ROUTES.testdrives)}
-        />
-      </View>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 78 }}
+        >
+          {/* Stats */}
+          <Text className="mt-6 font-bold text-white text-xl mb-3">
+            Dashboard Statistics
+          </Text>
 
-      {/* Appointments */}
-      <SectionHeader
-        title="My Test Drive Appointments"
-        actionText="See all"
-        onAction={() => router.push(ROUTES.testdrives)}
-      />
-      <View className="gap-2">
-        {loading ? (
-          <View className="rounded-2xl bg-white/5 border border-white/10 p-4">
-            <ActivityIndicator />
-            <Text className="text-white/70 mt-2">Loading test drives…</Text>
+          {/* Dashboard cards grid */}
+          <View className="flex-row flex-wrap justify-between">
+            {dashboardStats.map((d, index) => (
+              <View
+                key={index}
+                className="bg-gray p-5 rounded-[10px] w-[48%] mb-4"
+              >
+                <Text className="text-white text-3xl font-semibold">
+                  {d.number}
+                </Text>
+                <Text className="font-medium text-xl text-secondary mt-2">
+                  {d.desc}
+                </Text>
+
+                <View className="mt-4 flex-row gap-2 items-center">
+                  <Ionicons
+                    name={d.icon as any}
+                    size={24}
+                    color={color.iconColor}
+                  />
+                  <Text className="text-white font-semibold text-lg">
+                    {d.title}
+                  </Text>
+                </View>
+              </View>
+            ))}
           </View>
-        ) : appts && appts.length > 0 ? (
-          appts.map((a) => (
-            <View key={a.id} style={styles.card} className="rounded-2xl bg-white/5 border border-white/10 p-4">
-              <View className="flex-row items-center justify-between">
-                <View className="flex-1 pr-3">
-                  <Text className="text-white font-semibold">
-                    {a.customer_name ?? "—"}
-                  </Text>
-                  <Text className="text-white/70 text-sm mt-1">
-                    {a.vehicle_label ?? "—"}
-                  </Text>
-                  <View className="flex-row items-center gap-2 mt-2">
-                    <Feather name="clock" size={14} color="#A9B4C4" />
-                    <Text className="text-white/60 text-xs">
-                      {fmtVNDateTime(a.start_time)}
+
+          {/* Test drive appointments */}
+          <Text className="mt-6 font-bold text-white text-xl mb-3">
+            My Test Drive Appointments
+          </Text>
+
+          <View className="flex-col gap-3 ">
+            {testDriveAppointments.map((t, index) => (
+              <View
+                key={index}
+                className="p-5 bg-gray rounded-[10px] w-full items-center justify-between flex-row"
+              >
+                <View className="flex-col gap-3">
+                  <View>
+                    <Text className="font-semibold text-xl text-white mb-1">
+                      {t.name}
+                    </Text>
+                    <View className="flex-row gap-2 items-center">
+                      <Text className="text-secondary text-base font-medium">
+                        {t.vehicle} - {t.variant}
+                      </Text>
+                      <RoundDivider />
+                      <Text className="text-secondary font-medium text-base">
+                        {t.color}
+                      </Text>
+                    </View>
+                  </View>
+                  <View className="flex-row gap-2">
+                    <Ionicons
+                      name="calendar-clear-outline"
+                      size={16}
+                      color={color.textSecondary}
+                    />
+                    <Text className="font-medium text-secondary">{t.date}</Text>
+                  </View>
+                </View>
+                <Ionicons
+                  name="chevron-forward-outline"
+                  color={"white"}
+                  size={24}
+                />
+              </View>
+            ))}
+          </View>
+
+          <Text className="mt-10 font-bold text-white text-xl mb-3">
+            My Inventory
+          </Text>
+
+          <View className="flex-col gap-3">
+            {modelStock.map((s, index) => (
+              <Pressable
+                onPress={() => router.push(`/(vehicle)/${s.id}`)}
+                key={index}
+                className="flex-1 rounded-[15px] overflow-hidden bg-gray p-5"
+              >
+                <Image
+                  source={{ uri: s.img }}
+                  resizeMode="cover"
+                  className="w-full h-[200px] rounded-[15px]"
+                />
+                <View className="mt-3 mb-2">
+                  <View className="justify-between flex-row items-center">
+                    <Text className="text-xl font-semibold text-white">
+                      {s.model}
+                    </Text>
+                    <Text className="text-base font-medium text-secondary">
+                      {s.brand}
                     </Text>
                   </View>
                 </View>
-                <View className="rounded-xl bg-white/10 p-3">
-                  <Feather name="chevron-right" size={16} color="#E7EEF7" />
+                <View className="flex-row justify-between">
+                  <Features number={s.maxDistance} icon={"engine-outline"} />
+                  <Features number={s.seat} icon={"seat-outline"} />
+                  <Features number={s.stock} icon={"battery-outline"} />
+                  <Features number={s.drivetrain} icon={"abacus"} />
                 </View>
-              </View>
-            </View>
-          ))
-        ) : (
-          <Text className="text-white/60 py-8 text-center">No test drives today</Text>
-        )}
-      </View>
 
-      <View className="h-16" />
-    </ScrollView>
-  );
-}
-
-function SectionHeader({ title, actionText, onAction }: { title: string; actionText?: string; onAction?: () => void }) {
-  return (
-    <View className="flex-row items-center justify-between mt-6 mb-3">
-      <Text className="text-white font-semibold text-lg">{title}</Text>
-      {!!actionText && (
-        <Pressable onPress={onAction} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}>
-          <Text className="text-[#9EC5FE] text-sm">{actionText}</Text>
-        </Pressable>
-      )}
+                <View className="flex-row gap-3 items-end mt-5">
+                  <Text className="font-semibold text-white text-xl">
+                    Starting at {s.price}
+                  </Text>
+                  <Text className="text-secondary text-base line-through">
+                    {s.discount}
+                  </Text>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     </View>
   );
-}
+};
 
-function ActionTile({
-  icon,
-  title,
-  subtitle,
-  onPress,
-}: { icon: React.ComponentProps<typeof Feather>["name"]; title: string; subtitle: string; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} style={[styles.card, styles.pressable]}>
-      <View className="rounded-2xl bg-white/5 border border-white/10 p-4">
-        <View className="flex-row items-center gap-3">
-          <View className="rounded-2xl bg-white/10 p-3">
-            <Feather name={icon} size={18} color="#CFE2FF" />
-          </View>
-          <View className="flex-1">
-            <Text className="text-white font-semibold">{title}</Text>
-            <Text className="text-white/70 text-xs mt-0.5">{subtitle}</Text>
-          </View>
-          <Feather name="chevron-right" size={16} color="#E7EEF7" />
-        </View>
-      </View>
-    </Pressable>
-  );
-}
+export default Home;

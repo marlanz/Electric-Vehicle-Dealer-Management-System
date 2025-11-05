@@ -1,11 +1,12 @@
 import Features from "@/src/components/ui/CustomFeatures";
 import RoundDivider from "@/src/components/ui/RoundDivider";
 import { color, images } from "@/src/constants";
-import { selectAuth } from "@/src/features/auth/authSlice";
-import { useAppSelector } from "@/src/store";
+import { logout, selectAuth } from "@/src/features/auth/authSlice";
+import { useAppDispatch, useAppSelector } from "@/src/store";
 import { Ionicons } from "@expo/vector-icons";
+import axios from "axios";
 import { router } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -107,7 +108,38 @@ export const modelStock = [
 ];
 
 const Home = () => {
-  const { user } = useAppSelector(selectAuth);
+  const { user, token } = useAppSelector(selectAuth);
+
+  const dispatch = useAppDispatch();
+
+  const onLogout = async () => {
+    await dispatch(logout());
+
+    router.replace("/(auth)/auth");
+  };
+
+  useEffect(() => {
+    const fetchDealerInventory = async (dealerId: any) => {
+      try {
+        const response = await axios.get(
+          `https://electric-vehicle-dealer-management.onrender.com/api/v1/dealers/dealerId`,
+          {
+            params: { page: 1, limit: 50 },
+            headers: {
+              Authorization: `${token}`,
+            },
+          }
+        );
+        console.log("inventory", response);
+
+        return response.data;
+      } catch (err) {
+        console.log(err);
+      }
+    };
+    fetchDealerInventory(user?.dealer_id);
+  }, []);
+
   return (
     <View
       style={{
@@ -133,7 +165,12 @@ const Home = () => {
               </Text>
             </View>
           </View>
-          <Ionicons name="log-out-outline" size={24} color={"white"} />
+          <Ionicons
+            name="log-out-outline"
+            size={24}
+            color={"white"}
+            onPress={onLogout}
+          />
         </View>
 
         <ScrollView
