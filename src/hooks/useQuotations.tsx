@@ -14,6 +14,22 @@ interface Quotation {
   note: string;
 }
 
+interface CreateQuotationProps {
+  customerID: string;
+  vehicleID: string;
+  finalPrice: number;
+  voucherID: string | null;
+  staffID: string | null;
+  status: string;
+  createAt: string;
+  note: string;
+}
+
+export interface UpdateQuotationProps {
+  status: string;
+  note: string;
+}
+
 const useQuotations = () => {
   const [qdata, setQdata] = useState<Quotation[]>([]);
   const [qdetail, setQdetail] = useState<Quotation | null>(null);
@@ -31,7 +47,7 @@ const useQuotations = () => {
     }
   }, []);
 
-  const fetchQuotationDetail = useCallback(async (id: string) => {
+  const fetchQuotationDetail = useCallback(async (id: number) => {
     setLoading(true);
     try {
       const response = await axios.get(`${ENDPOINTS.quotations}/${id}`);
@@ -42,7 +58,47 @@ const useQuotations = () => {
       setLoading(false);
     }
   }, []);
-  return { fetchAllQuotations, fetchQuotationDetail, qdata, loading, qdetail };
+
+  const createQuotations = useCallback(async (body: CreateQuotationProps) => {
+    setLoading(true);
+    try {
+      const response = await axios.post(ENDPOINTS.quotations, body); // ✅ sửa endpoint
+      if (response.status === 201) {
+        return true;
+      }
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const updateQuotation = useCallback(
+    async (id: number, body: UpdateQuotationProps) => {
+      setLoading(true);
+      try {
+        const response = await axios.put(`${ENDPOINTS.quotations}/${id}`, body);
+        if (response.status === 200) {
+          return true;
+        }
+      } catch (err) {
+        console.log(err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  return {
+    fetchAllQuotations,
+    fetchQuotationDetail,
+    createQuotations,
+    updateQuotation,
+    qdata,
+    loading,
+    qdetail,
+  };
 };
 
 export default useQuotations;

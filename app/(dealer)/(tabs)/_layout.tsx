@@ -63,11 +63,11 @@ const Layout = () => {
           }}
         />
         <Tabs.Screen
-          name="orders"
+          name="customer"
           options={{
-            title: "Orders",
+            title: "Customer",
             tabBarIcon: ({ color, size }) => (
-              <Feather name="shopping-bag" size={size} color={color} />
+              <Feather name="users" size={size} color={color} />
             ),
           }}
         />

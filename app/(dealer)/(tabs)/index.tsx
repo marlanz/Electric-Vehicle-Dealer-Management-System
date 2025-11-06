@@ -44,30 +44,6 @@ const dashboardStats = [
   },
 ];
 
-const testDriveAppointments = [
-  {
-    name: "John D. Robbin",
-    vehicle: "Cyber truck",
-    variant: "Long Range",
-    color: "Blue Navy",
-    date: "Oct 28, 2024, 10:30 AM",
-  },
-  {
-    name: "John D. Robbin",
-    vehicle: "Cyber truck",
-    variant: "Long Range",
-    color: "Blue Navy",
-    date: "Oct 28, 2024, 10:30 AM",
-  },
-  {
-    name: "John D. Robbin",
-    vehicle: "Cyber truck",
-    variant: "Long Range",
-    color: "Blue Navy",
-    date: "Oct 28, 2024, 10:30 AM",
-  },
-];
-
 export const modelStock = [
   {
     id: 1,

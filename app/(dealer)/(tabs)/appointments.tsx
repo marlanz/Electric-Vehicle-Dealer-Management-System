@@ -1,11 +1,11 @@
-import CustomDivider from "@/src/components/ui/CustomDivider";
-import CustomPrice from "@/src/components/ui/CustomPrice";
+import CustomTestDriveCard, {
+  CustomTestDriveCardProps,
+} from "@/src/components/ui/CustomTestDriveCard";
 import { color } from "@/src/constants";
-import { Ionicons } from "@expo/vector-icons";
+import useAppointments from "@/src/hooks/useAppointments";
 import cn from "clsx";
-import { router } from "expo-router";
-import React, { useState } from "react";
-import { FlatList, Pressable, Text, TextInput, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { FlatList, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const brands = [
@@ -13,70 +13,19 @@ const brands = [
     id: 1,
     name: "All",
   },
-  { id: 2, name: "Pending" },
-  { id: 3, name: "Approved" },
-  { id: 4, name: "Rejected" },
+  { id: 2, name: "Scheduled" },
+  { id: 3, name: "Completed" },
+  { id: 4, name: "Cancelled" },
 ];
-
-const quotations = [
-  {
-    id: "QUO-2024-00123",
-    customerName: "Nguyễn Minh Sang",
-    model: "Vinfast VF7",
-    color: "Crimson Pulse",
-    version: "Long Range",
-    createdAt: "20/10/2024",
-    staff: "John Doe",
-    status: "Scheduled",
-    price: "$ 52,990.00",
-  },
-  {
-    id: "QUO-2024-00124",
-    customerName: "Trần Hoàng Phúc",
-    model: "Tesla Model Y",
-    color: "Midnight Silver",
-    version: "Performance",
-    createdAt: "22/10/2024",
-    staff: "Emily Carter",
-    status: "Cancelled",
-    price: "$ 52,990.00",
-  },
-  {
-    id: "QUO-2024-00125",
-    customerName: "Lê Bảo Ngọc",
-    model: "BYD Atto 3",
-    color: "Arctic White",
-    version: "Standard Range",
-    createdAt: "25/10/2024",
-    staff: "David Nguyen",
-    status: "Completed",
-    price: "$ 52,990.00",
-  },
-];
-
-const parseStatusToColor = (status: string) => {
-  switch (status.toLowerCase()) {
-    case "completed":
-      return "text-[#16D68F] bg-[#16D68F]/[0.1]";
-
-    case "pending":
-      return "text-[#F9C74F] bg-[#F9C74F]/[0.1]";
-
-    case "scheduled":
-    case "created":
-      return "text-[#61B1FF] bg-[#61B1FF]/[0.1]";
-
-    case "dismissed":
-    case "cancelled":
-      return "text-[#959CA7] bg-[#959CA7]/[0.1]";
-
-    default:
-      return "text-white bg-gray-600/30";
-  }
-};
 
 const Appointments = () => {
   const [selected, setSelected] = useState(1);
+
+  const { fetchAllAppointments, adata } = useAppointments();
+
+  useEffect(() => {
+    fetchAllAppointments();
+  }, [fetchAllAppointments]);
 
   return (
     <View style={{ backgroundColor: color.backgroundPrimary, flex: 1 }}>
@@ -88,7 +37,7 @@ const Appointments = () => {
             </Text>
           </View>
 
-          <View className="p-3 bg-gray rounded-[10px] flex-row items-center gap-3">
+          {/* <View className="p-3 bg-gray rounded-[10px] flex-row items-center gap-3">
             <Ionicons
               name="search-outline"
               size={24}
@@ -105,7 +54,7 @@ const Appointments = () => {
               // ref={inputRef}
               autoFocus={true}
             />
-          </View>
+          </View> */}
           <FlatList
             data={brands}
             horizontal
@@ -133,71 +82,31 @@ const Appointments = () => {
                 </Pressable>
               );
             }}
-            contentContainerClassName="gap-3 mt-4"
+            contentContainerClassName="gap-3 "
             // style={{ overflow: "visible" }}
           />
         </View>
 
         <FlatList
-          data={quotations}
+          data={adata}
           keyExtractor={(item) => item.id.toString()}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => router.push(`/(vehicle)/${item.id}`)}
-              className="p-5 rounded-[10px] bg-gray"
-            >
-              <View className="gap-4">
-                {/* header */}
-                <View className="flex-row gap-[10px] items-start">
-                  <Ionicons
-                    name="car-outline"
-                    size={24}
-                    color={"white"}
-                    className="p-[10px] bg-[#1C354C] self-start rounded-[10px]"
-                  />
-                  <View className="flex-1">
-                    <Text className="text-white text-lg font-semibold">
-                      {item.customerName}
-                    </Text>
-
-                    <Text
-                      className="text-sm text-secondary font-medium mt-1"
-                      numberOfLines={1}
-                    >
-                      {item.model} / {item.color} / {item.version}
-                    </Text>
-                  </View>
-                </View>
-                <CustomDivider />
-                <View className="gap-4">
-                  <CustomPrice
-                    title="Location"
-                    value={"Showroom Vinfast Go Vap"}
-                    valueStyles="text-white max-w-[200px]"
-                  />
-                  <CustomPrice
-                    title="Date Created"
-                    value={item.createdAt}
-                    valueStyles="text-white"
-                  />
-
-                  <CustomPrice
-                    title="Created By"
-                    value={item.staff}
-                    valueStyles="text-white"
-                  />
-                  <CustomPrice
-                    title="Status"
-                    value={item.status}
-                    valueStyles={`px-[10px] py-[5px] rounded-[8px] ${parseStatusToColor(item.status)}`}
-                  />
-                </View>
-              </View>
-            </Pressable>
-          )}
+          renderItem={({ item }) => {
+            const body = {
+              id: item.id,
+              customerID: item.customerID,
+              vehicleID: item.vehicleID,
+              location: item.dealerLocation,
+              staffName: item.staffName,
+              appointedDate: item.appointedDate,
+              status: item.status,
+            };
+            return (
+              <CustomTestDriveCard item={body as CustomTestDriveCardProps} />
+            );
+          }}
           contentContainerClassName=" gap-4 "
-          contentContainerStyle={{ paddingBottom: 190 }}
+          contentContainerStyle={{ paddingBottom: 150 }}
         />
       </SafeAreaView>
     </View>

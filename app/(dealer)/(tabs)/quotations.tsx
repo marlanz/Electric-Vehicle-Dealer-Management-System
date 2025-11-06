@@ -1,11 +1,8 @@
-import CustomDivider from "@/src/components/ui/CustomDivider";
-import CustomPrice from "@/src/components/ui/CustomPrice";
+import CustomQuotationCard from "@/src/components/ui/CustomQuotationCard";
 import { color } from "@/src/constants";
-import { Feather, Ionicons } from "@expo/vector-icons";
-import cn from "clsx";
-import { router } from "expo-router";
-import React, { useState } from "react";
-import { FlatList, Pressable, Text, TextInput, View } from "react-native";
+import useQuotations from "@/src/hooks/useQuotations";
+import React, { useEffect, useState } from "react";
+import { FlatList, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const brands = [
@@ -81,17 +78,23 @@ const parseStatusToColor = (status: string) => {
 const Quotations = () => {
   const [selected, setSelected] = useState(1);
 
+  const { fetchAllQuotations, qdata } = useQuotations();
+
+  useEffect(() => {
+    fetchAllQuotations();
+  }, [fetchAllQuotations]);
+
   return (
     <View style={{ backgroundColor: color.backgroundPrimary, flex: 1 }}>
       <SafeAreaView className="px-4 ">
-        <View className="pb-6">
+        <View className="pB-3">
           <View className="flex-row justify-between py-5">
             <Text className="text-2xl font-semibold text-white">
               My Quotations
             </Text>
           </View>
 
-          <View className="p-3 bg-gray rounded-[10px] flex-row items-center gap-3">
+          {/* <View className="p-3 bg-gray rounded-[10px] flex-row items-center gap-3">
             <Ionicons
               name="search-outline"
               size={24}
@@ -108,8 +111,8 @@ const Quotations = () => {
               // ref={inputRef}
               autoFocus={true}
             />
-          </View>
-          <FlatList
+          </View> */}
+          {/* <FlatList
             data={brands}
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -138,67 +141,14 @@ const Quotations = () => {
             }}
             contentContainerClassName="gap-3 mt-4"
             // style={{ overflow: "visible" }}
-          />
+          /> */}
         </View>
 
         <FlatList
-          data={quotations}
+          data={qdata}
           keyExtractor={(item) => item.id.toString()}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => router.push(`/(vehicle)/${item.id}`)}
-              className="p-5 rounded-[10px] bg-gray"
-            >
-              <View className="gap-4">
-                {/* header */}
-                <View className="flex-row gap-[10px] items-start">
-                  <Feather
-                    name="file-text"
-                    size={24}
-                    color={"white"}
-                    className="p-[10px] bg-[#1C354C] self-start rounded-[10px]"
-                  />
-                  <View className="flex-1">
-                    <Text className="text-white text-lg font-semibold">
-                      {item.id}
-                    </Text>
-                    <Text className="mt-1 text-base text-secondary font-medium">
-                      Customer: {item.customerName}
-                    </Text>
-                    <Text
-                      className="text-sm text-secondary font-medium mt-1"
-                      numberOfLines={1}
-                    >
-                      {item.model} / {item.color} / {item.version}
-                    </Text>
-                  </View>
-                </View>
-                <CustomDivider />
-                <View className="gap-4">
-                  <CustomPrice
-                    title="Date Created"
-                    value={item.createdAt}
-                    valueStyles="text-white"
-                  />
-
-                  <CustomPrice
-                    title="Created By"
-                    value={item.staff}
-                    valueStyles="text-white"
-                  />
-                  <CustomPrice
-                    title="Status"
-                    value={item.status}
-                    valueStyles={`px-[10px] py-[5px] rounded-[8px] ${parseStatusToColor(item.status)}`}
-                  />
-                </View>
-              </View>
-              <Text className="mt-6 text-2xl font-semibold text-green-200">
-                Total Price: {item.price}
-              </Text>
-            </Pressable>
-          )}
+          renderItem={({ item }) => <CustomQuotationCard item={item} />}
           contentContainerClassName=" gap-4 "
           contentContainerStyle={{ paddingBottom: 190 }}
         />

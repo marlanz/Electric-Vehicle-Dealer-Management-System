@@ -1,8 +1,9 @@
 import CustomButton from "@/src/components/ui/CustomButton";
 import CustomStatCard from "@/src/components/ui/CustomStatCard";
+import useVehicles from "@/src/hooks/useVehicles";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -27,6 +28,13 @@ export const vehicleDetail = {
 
 const VehicleDetail = () => {
   const { id } = useLocalSearchParams();
+
+  const { fetchVehicleDetail, vdetail, loading } = useVehicles();
+
+  useEffect(() => {
+    fetchVehicleDetail(id as string);
+  }, [id, fetchVehicleDetail]);
+
   return (
     <SafeAreaView className="px-4">
       {/* Header */}
@@ -48,7 +56,7 @@ const VehicleDetail = () => {
         contentContainerStyle={{ paddingBottom: 80 }}
       >
         <Image
-          source={{ uri: vehicleDetail.img }}
+          source={{ uri: vdetail?.imageURL }}
           resizeMode="cover"
           className="w-full h-[300px] rounded-[10px]"
         />
@@ -56,26 +64,44 @@ const VehicleDetail = () => {
         {/* Title */}
         <View className="gap-2 mt-5">
           <Text className="text-white font-bold text-2xl">
-            {vehicleDetail.model}
+            {vdetail?.model}
           </Text>
           <Text className="text-secondary font-medium text-base">
-            {vehicleDetail.desc}
+            {vdetail?.description}
           </Text>
         </View>
 
+        <View className="flex-row justify-between mt-6">
+          <View className="gap-1  w-[48%]">
+            <Text className="font-medium text-lg text-secondary">
+              Model Color
+            </Text>
+            <Text className="font-semibold text-white text-xl">
+              {vehicleDetail.color}
+            </Text>
+          </View>
+          <View className="gap-1 items-start  w-[48%]">
+            <Text className="font-medium text-lg text-secondary">
+              Model Variant
+            </Text>
+            <Text className="font-semibold text-white text-xl">
+              {vehicleDetail.variant}
+            </Text>
+          </View>
+        </View>
         {/* Specs */}
         <View className="mt-6">
           <View className="flex-row justify-between">
             <CustomStatCard
               title="Motor Engine"
               desc="Peak Power"
-              number={vehicleDetail.maxDistance}
+              number={vdetail?.features?.motor}
               icon={"engine-outline"}
             />
             <CustomStatCard
               title="Capacity"
               desc="Total Seats"
-              number={`0${vehicleDetail.seat} seats`}
+              number={`0${vdetail?.features?.seats} seats`}
               icon={"seat-outline"}
             />
           </View>
@@ -83,69 +109,45 @@ const VehicleDetail = () => {
             <CustomStatCard
               title="Battery"
               desc="Battery life"
-              number={vehicleDetail.stock}
+              number={vdetail?.features.battery}
               icon={"battery-outline"}
             />
             <CustomStatCard
               title="Drivetrain"
               desc="Power Distribution"
-              number={`${vehicleDetail.drivetrain} gear`}
+              number={`${vdetail?.features.drivetrain} gear`}
               icon={"abacus"}
             />
           </View>
         </View>
 
-        {/* Color */}
-        <View className="gap-4 mt-6">
-          <Text className="text-white font-semibold text-xl">Model Color</Text>
-          <View className="p-5 rounded-[10px] bg-gray flex-row justify-between items-center">
-            <View className="gap-2 flex-1">
-              <Text className="text-white font-semibold text-[18px]">
-                {vehicleDetail.color}
-              </Text>
-              <Text className="text-secondary font-semibold text-base">
-                Energetic & sharp
-              </Text>
-            </View>
-            <View
-              className="size-[20px] rounded-full"
-              style={{ backgroundColor: vehicleDetail.hex }}
-            ></View>
-          </View>
-        </View>
-
-        {/* Variant */}
-        <View className="gap-4 mt-8">
-          <Text className="text-white font-semibold text-xl">
-            Model Variant
-          </Text>
-          <View className="p-5 rounded-[10px] bg-gray flex-row justify-between items-center">
-            <View className="gap-2 flex-1">
-              <Text className="text-white font-semibold text-[18px]">
-                {vehicleDetail.variant} version
-              </Text>
-              <Text className="text-secondary font-semibold text-base">
-                Efficient for maximum range.
-              </Text>
-            </View>
-            <Text className="font-semibold text-xl text-white">$74,000</Text>
-          </View>
-        </View>
-
         {/* Actions */}
         <View className="mt-[40px]">
-          <CustomButton
-            btnStyles="bg-blue"
-            textStyles="text-white"
-            title="Create Quotation"
-            onPress={() => router.push("/(quotation)/create")}
-          />
+          <Pressable
+            className="py-3 w-full rounded-[8px] bg-blue"
+            onPress={() => {
+              if (!vdetail?.id) return;
+              router.push({
+                pathname: "/(quotation)/create" as any,
+                params: { vehicleID: vdetail.id },
+              });
+            }}
+          >
+            <Text className="font-semibold text-base  text-center text-white">
+              Create Quotation
+            </Text>
+          </Pressable>
           <View className="flex-row gap-3 mt-4">
             <CustomButton
               btnStyles="bg-[#61B1FF]/[0.15] "
               textStyles="text-blue"
               title="Book Test Drive"
-              onPress={() => router.push("/(testdrive)/create")}
+              onPress={() => {
+                router.push({
+                  pathname: "/(testdrive)/create" as any,
+                  params: { vehicleID: vdetail?.id },
+                });
+              }}
             />
             <CustomButton
               btnStyles="border border-blue "
