@@ -1,12 +1,21 @@
-import CustomButton from "@/src/components/ui/CustomButton";
 import CustomDivider from "@/src/components/ui/CustomDivider";
+import CustomerPickerModal from "@/src/components/ui/CustomerPickerModal";
 import CustomModelSpecs from "@/src/components/ui/CustomModelSpecs";
 import CustomPrice from "@/src/components/ui/CustomPrice";
+import VoucherPickerModal from "@/src/components/ui/VoucherPickerModal";
 import { color, images } from "@/src/constants";
+import { selectAuth } from "@/src/features/auth/authSlice";
+import useCustomer from "@/src/hooks/useCustomer";
+import useQuotations from "@/src/hooks/useQuotations";
+import useVehicles from "@/src/hooks/useVehicles";
+import useVouchers, { Vouchers } from "@/src/hooks/useVouchers";
+import { useAppSelector } from "@/src/store";
+import { formatToDollar } from "@/src/utils";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import React from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -17,6 +26,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { SelectedCustomerProps } from "../(testdrive)/create";
 
 const vehicleDetail = {
   id: 1,
@@ -38,6 +48,82 @@ const vehicleDetail = {
 };
 
 const CreateQuotation = () => {
+  const { vehicleID } = useLocalSearchParams();
+
+  const { user } = useAppSelector(selectAuth);
+
+  console.log(vehicleID); // your id value
+
+  const { fetchVehicleDetail, vdetail } = useVehicles();
+
+  const { fetchAllCustomers, cdata } = useCustomer();
+
+  const { fetchAllVouchers, vodata } = useVouchers();
+
+  const { createQuotations } = useQuotations();
+
+  const [selectedCustomer, setSelectedCustomer] =
+    useState<SelectedCustomerProps | null>(null);
+
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
+
+  const [showVoucherModal, setShowVoucherModal] = useState(false);
+
+  const [selectedVoucher, setSelectedVoucher] = useState<Vouchers | null>(null);
+
+  const price = vdetail?.dealerPrice || 0;
+
+  const discountPercent = selectedVoucher?.discountPercentage || 0;
+
+  const discountAmount = price * (discountPercent / 100);
+
+  const finalPrice = price - discountAmount;
+
+  const [form, setForm] = useState<{
+    customerID: string;
+    appointedDate: string;
+    note: string;
+  }>({ customerID: "", appointedDate: "", note: "" });
+
+  const handleSubmitQuotation = async () => {
+    const body = {
+      customerID: form.customerID,
+      vehicleID: Array.isArray(vehicleID) ? vehicleID[0] : vehicleID,
+      finalPrice: finalPrice,
+      voucherID: selectedVoucher?.id ?? null,
+      staffID: user?.full_name ?? null,
+      status: "Pending",
+      createAt: new Date().toISOString(),
+      note: form.note,
+    };
+    console.log(body);
+
+    try {
+      const success = await createQuotations(body);
+      if (success) {
+        Alert.alert("Success", "Quotation created successfully", [
+          {
+            text: "OK",
+            onPress: () => router.push("/"), // ✅ go home after OK
+          },
+        ]);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchVehicleDetail(vehicleID as string);
+  }, [vehicleID, fetchVehicleDetail]);
+
+  useEffect(() => {
+    fetchAllCustomers();
+  }, [fetchAllCustomers]);
+
+  useEffect(() => {
+    fetchAllVouchers();
+  }, []);
   return (
     <SafeAreaView className="flex-1 px-4">
       <View className="flex-row justify-between py-5">
@@ -77,32 +163,63 @@ const CreateQuotation = () => {
                   Customer Information
                 </Text>
               </View>
-              <Text className="text-[#16D68F] font-medium textbase px-[10px] py-[5px] bg-[#16D68F]/[0.1] rounded-[8px]">
-                Verified
-              </Text>
+
+              {selectedCustomer && (
+                <Pressable onPress={() => setShowCustomerModal(true)}>
+                  <AntDesign name="user-switch" size={24} color="white" />
+                </Pressable>
+              )}
             </View>
-            <View className="flex-row justify-between items-center">
-              <View className="flex-row gap-4">
+            {!selectedCustomer ? (
+              <Pressable
+                className="py-3 w-full rounded-[8px] bg-blue"
+                onPress={() => setShowCustomerModal(true)}
+              >
+                <Text className="font-semibold text-base  text-center text-white">
+                  Add Customer
+                </Text>
+              </Pressable>
+            ) : (
+              <View className="flex-row gap-4 items-center">
                 <Image
                   source={images.avt_placeholder}
                   className="size-[65px] rounded-full"
-                  resizeMode="contain"
                 />
+
                 <View>
                   <Text className="font-medium text-xl text-white">
-                    Nguyễn Minh Sang
+                    {selectedCustomer?.fullName}
                   </Text>
-                  <Text className="mt-1 text-secondary font-medium text-base">
-                    +84 98738726
+                  <Text className="text-secondary text-base">
+                    {selectedCustomer.phone}
                   </Text>
-                  <Text className="text-secondary font-medium text-base mt-1">
-                    johndoe.test@gmail.com
+                  <Text className="text-secondary text-base">
+                    {selectedCustomer.email}
                   </Text>
                 </View>
               </View>
-              <AntDesign name="user-switch" size={24} color="white" />
-            </View>
+            )}
           </View>
+
+          <CustomerPickerModal
+            visible={showCustomerModal}
+            customers={cdata}
+            onClose={() => setShowCustomerModal(false)}
+            onSelect={(customer) => {
+              setSelectedCustomer({
+                fullName: customer.fullName,
+                phone: customer.phone,
+                email: customer.email,
+              });
+
+              setForm((prev: any) => ({
+                ...prev,
+                customerID: customer.id,
+              }));
+
+              setShowCustomerModal(false);
+            }}
+          />
           {/* Vehicle info */}
           <View className="p-[15px] bg-gray rounded-[10px]">
             <View className="flex-row justify-between mb-5">
@@ -119,7 +236,7 @@ const CreateQuotation = () => {
             </View>
             <View className="gap-5">
               <Image
-                source={{ uri: vehicleDetail?.img }}
+                source={{ uri: vdetail?.imageURL }}
                 resizeMode="cover"
                 className="w-full h-[250px] rounded-[10px]"
               />
@@ -130,7 +247,7 @@ const CreateQuotation = () => {
                     Model
                   </Text>
                   <Text className="font-semibold text-white text-xl">
-                    {vehicleDetail.model}
+                    {vdetail?.model}
                   </Text>
                 </View>
                 {/* Specs */}
@@ -142,31 +259,31 @@ const CreateQuotation = () => {
                     <View className="flex-row justify-between">
                       <CustomModelSpecs
                         label="Peak Power"
-                        value={`${vehicleDetail.maxDistance}`}
+                        value={`${vdetail?.features.motor}`}
                       />
                       <CustomModelSpecs
                         label="Total Seats"
-                        value={`${vehicleDetail.seat} seats`}
+                        value={`${vdetail?.features.seats} seats`}
                       />
                       <CustomModelSpecs
                         label="Battery"
-                        value={`${vehicleDetail.stock}`}
+                        value={`${vdetail?.features.battery}`}
                       />
                       <CustomModelSpecs
                         label="Drivetrain"
-                        value={`${vehicleDetail.drivetrain}`}
+                        value={`${vdetail?.features.drivetrain}`}
                       />
                     </View>
                   </View>
                 </View>
                 {/* Color */}
                 <View className="flex-row gap-[50px]">
-                  <View className="gap-1">
+                  <View className="gap-1 ">
                     <Text className="font-medium text-base text-secondary">
                       Model Color
                     </Text>
                     <Text className="font-semibold text-white text-xl">
-                      {vehicleDetail.color}
+                      {vdetail?.color}
                     </Text>
                   </View>
                   <View className="gap-1">
@@ -174,7 +291,7 @@ const CreateQuotation = () => {
                       Model Variant
                     </Text>
                     <Text className="font-semibold text-white text-xl">
-                      {vehicleDetail.variant}
+                      {vdetail?.version}
                     </Text>
                   </View>
                 </View>
@@ -198,46 +315,68 @@ const CreateQuotation = () => {
             </View>
             {/* Body */}
             <View className="gap-5">
+              {/* On-road price */}
               <View className="flex-row gap-4">
                 <View className="gap-1 flex-1">
                   <Text className="font-medium text-base text-secondary">
                     On-Road Price
                   </Text>
                   <Text className="font-semibold text-white text-xl px-3 py-[14px] bg-dark rounded-[10px] border border-secondary">
-                    {vehicleDetail.price}
+                    {formatToDollar(price)}
                   </Text>
                 </View>
 
+                {/* Voucher select */}
                 <View className="gap-1 flex-1">
                   <Text className="font-medium text-base text-secondary">
-                    Discount
+                    Voucher
                   </Text>
-                  <Text className="font-semibold text-white text-xl px-3 py-[14px] bg-dark rounded-[10px] border border-secondary">
-                    {vehicleDetail.price}
-                  </Text>
+
+                  <Pressable
+                    onPress={() => setShowVoucherModal(true)}
+                    className="px-3 py-[14px] bg-blue rounded-[10px]"
+                  >
+                    <Text className="font-semibold text-white text-center">
+                      {selectedVoucher
+                        ? `${selectedVoucher.discountPercentage}% OFF`
+                        : "Select Voucher"}
+                    </Text>
+                  </Pressable>
                 </View>
               </View>
+
+              {/* Price Summary */}
               <View className="p-[15px] bg-dark rounded-[10px] gap-4">
                 <CustomPrice
                   title="Subtotal"
-                  value={vehicleDetail.price}
+                  value={formatToDollar(price)}
                   valueStyles="text-white text-lg"
                 />
+
                 <CustomPrice
                   title="Discount"
-                  value={`- $2,000`}
+                  value={`- ${formatToDollar(discountAmount)}`}
                   valueStyles="text-[#16D68F]  text-lg"
                 />
+
                 <CustomDivider />
+
                 <CustomPrice
                   title="Total Price"
-                  value={`$ 52,990`}
-                  valueStyles="text-white  text-xl"
+                  value={formatToDollar(finalPrice)}
+                  valueStyles="text-white text-xl"
                   titleStyles="text-white font-semibold text-xl"
                 />
               </View>
             </View>
           </View>
+
+          <VoucherPickerModal
+            visible={showVoucherModal}
+            vouchers={vodata}
+            onClose={() => setShowVoucherModal(false)}
+            onSelect={(voucher: any) => setSelectedVoucher(voucher)}
+          />
 
           {/* Additional Notes */}
 
@@ -259,9 +398,6 @@ const CreateQuotation = () => {
             <View className="bg-dark">
               <TextInput
                 multiline
-                autoCapitalize="none"
-                numberOfLines={6}
-                autoCorrect={false}
                 placeholder="Write something..."
                 placeholderTextColor="#959CA7"
                 textAlignVertical="top"
@@ -272,16 +408,22 @@ const CreateQuotation = () => {
                   paddingVertical: 10,
                   lineHeight: 20,
                 }}
+                value={form.note}
+                onChangeText={(text) =>
+                  setForm((prev) => ({ ...prev, note: text }))
+                }
               />
             </View>
           </View>
           <View className="mt-5">
-            <CustomButton
-              btnStyles="bg-blue"
-              textStyles="text-white"
-              title="Confirm & Send"
-              onPress={() => {}}
-            />
+            <Pressable
+              className="py-3 w-full rounded-[8px] bg-blue"
+              onPress={handleSubmitQuotation}
+            >
+              <Text className="font-semibold text-base  text-center text-white">
+                Confirm & Send
+              </Text>
+            </Pressable>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

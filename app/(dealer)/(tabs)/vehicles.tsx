@@ -1,9 +1,10 @@
 import Features from "@/src/components/ui/CustomFeatures";
 import { color } from "@/src/constants";
+import useVehicles from "@/src/hooks/useVehicles";
+import { formatToDollar } from "@/src/utils";
 import { Ionicons } from "@expo/vector-icons";
-import cn from "clsx";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import {
   FlatList,
   Image,
@@ -13,22 +14,13 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { modelStock } from ".";
-
-const brands = [
-  {
-    id: 1,
-    name: "All brands",
-  },
-  { id: 2, name: "Tesla" },
-  { id: 3, name: "BYD" },
-  { id: 4, name: "Vinfast" },
-  { id: 5, name: "Honda" },
-];
 
 const Vehicles = () => {
-  const [selected, setSelected] = useState(1);
+  const { fetchAllVehicles, vdata } = useVehicles();
 
+  useEffect(() => {
+    fetchAllVehicles();
+  }, []);
   return (
     <View style={{ backgroundColor: color.backgroundPrimary, flex: 1 }}>
       <SafeAreaView className="px-4 ">
@@ -58,47 +50,17 @@ const Vehicles = () => {
               autoFocus={true}
             />
           </View>
-          <FlatList
-            data={brands}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => {
-              const isActive = selected === item.id;
-
-              return (
-                <Pressable
-                  onPress={() => setSelected(item.id)}
-                  className={cn(
-                    "px-4 py-[10px] rounded-[10px] ",
-                    isActive ? "bg-blue" : "bg-gray border-gray-700"
-                  )}
-                >
-                  <Text
-                    className={cn(
-                      "font-semibold text-base",
-                      isActive ? "text-white" : "text-secondary"
-                    )}
-                  >
-                    {item.name}
-                  </Text>
-                </Pressable>
-              );
-            }}
-            contentContainerClassName="gap-3 mt-4"
-            // style={{ overflow: "visible" }}
-          />
         </View>
 
         <FlatList
-          data={modelStock}
+          data={vdata.list}
           keyExtractor={(item) => item.id.toString()}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <Pressable onPress={() => router.push(`/(vehicle)/${item.id}`)}>
               <View className="flex-1 rounded-[15px] overflow-hidden bg-gray p-5">
                 <Image
-                  source={{ uri: item.img }}
+                  source={{ uri: item.imageURL }}
                   resizeMode="cover"
                   className="w-full h-[200px] rounded-[15px]"
                 />
@@ -108,23 +70,32 @@ const Vehicles = () => {
                       {item.model}
                     </Text>
                     <Text className="text-base font-medium text-secondary">
-                      {item.brand}
+                      {item.model}
                     </Text>
                   </View>
                 </View>
                 <View className="flex-row justify-between">
-                  <Features number={item.maxDistance} icon={"engine-outline"} />
-                  <Features number={item.seat} icon={"seat-outline"} />
-                  <Features number={item.stock} icon={"battery-outline"} />
-                  <Features number={item.drivetrain} icon={"abacus"} />
+                  <Features
+                    number={item.features.motor}
+                    icon={"engine-outline"}
+                  />
+                  <Features
+                    number={item.features.seats}
+                    icon={"seat-outline"}
+                  />
+                  <Features
+                    number={item.features.battery}
+                    icon={"battery-outline"}
+                  />
+                  <Features number={item.features.drivetrain} icon={"abacus"} />
                 </View>
 
                 <View className="flex-row gap-3 items-end mt-5">
                   <Text className="font-semibold text-white text-xl">
-                    Starting at {item.price}
+                    Starting at {formatToDollar(item.dealerPrice)}
                   </Text>
                   <Text className="text-secondary text-base line-through">
-                    {item.discount}
+                    {formatToDollar(item.manufacturedPrice)}
                   </Text>
                 </View>
               </View>

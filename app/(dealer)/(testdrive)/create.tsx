@@ -1,12 +1,17 @@
-import CustomButton from "@/src/components/ui/CustomButton";
 import CustomerPickerModal from "@/src/components/ui/CustomerPickerModal";
 import CustomModelSpecs from "@/src/components/ui/CustomModelSpecs";
 import DateTimeInput from "@/src/components/ui/DateTimeInput ";
 import { color, images } from "@/src/constants";
+import { selectAuth } from "@/src/features/auth/authSlice";
+import useAppointments from "@/src/hooks/useAppointments";
+import useCustomer from "@/src/hooks/useCustomer";
+import useVehicles from "@/src/hooks/useVehicles";
+import { useAppSelector } from "@/src/store";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import React, { useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -18,25 +23,6 @@ import {
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
-
-const vehicleDetail = {
-  id: 1,
-  model: "Vinfast VF7 Limited Edition",
-  brand: "Tesla",
-  stock: "57 kW",
-  maxDistance: "330 kWh",
-  acceleration: 4.8,
-  battery: 81,
-  price: "$44,990",
-  drivetrain: "AWD",
-  seat: 5,
-  discount: "$40,290",
-  variant: "Eco",
-  color: "Crimson Pulse",
-  hex: "#C62833",
-  img: "https://i.pinimg.com/1200x/d5/da/11/d5da11d9d023a866c2999c9c7c54b333.jpg",
-  desc: "Vinfast VF7 is a high-performance electric sedan with unparallel rage and exhilirating acceleration",
-};
 
 export const customers = [
   {
@@ -59,9 +45,70 @@ export const customers = [
   },
 ];
 
+export interface SelectedCustomerProps {
+  fullName: string;
+  phone: string;
+  email: string;
+}
+
 const CreateAppointment = () => {
+  const { fetchAllCustomers, cdata } = useCustomer();
+
+  const { user } = useAppSelector(selectAuth);
+
   const [showCustomerModal, setShowCustomerModal] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState(customers[0]);
+
+  const [form, setForm] = useState<{
+    customerID: string;
+    appointedDate: string;
+    note: string;
+  }>({ customerID: "", appointedDate: "", note: "" });
+
+  const [selectedCustomer, setSelectedCustomer] =
+    useState<SelectedCustomerProps | null>(null);
+
+  const { vehicleID } = useLocalSearchParams();
+
+  const { fetchVehicleDetail, vdetail } = useVehicles();
+
+  const { createAppointment } = useAppointments();
+
+  const handleCreateAppointment = async () => {
+    if (!form) return;
+    try {
+      const body = {
+        customerID: form.customerID,
+        vehicleID: Array.isArray(vehicleID) ? vehicleID[0] : vehicleID, // ✅ ensure string
+        dealerLocation: "EV Motors TP.HCM",
+        appointedDate: form.appointedDate,
+        staffName: user?.full_name,
+        status: "Scheduled",
+        note: form.note,
+        isQuote: false,
+      };
+
+      const success = await createAppointment(body);
+      if (success) {
+        Alert.alert("Success", "Test drive appointment created successfully", [
+          {
+            text: "OK",
+            onPress: () => router.push("/"), // ✅ go home after OK
+          },
+        ]);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchVehicleDetail(vehicleID as string);
+  }, [vehicleID, fetchVehicleDetail]);
+
+  useEffect(() => {
+    fetchAllCustomers();
+  }, [fetchAllCustomers]);
+
   return (
     <SafeAreaView className="flex-1 px-4">
       <View className="flex-row justify-between py-5">
@@ -92,46 +139,73 @@ const CreateAppointment = () => {
           <View className="p-[15px] bg-gray rounded-[10px]">
             <View className="flex-row justify-between mb-5">
               <View className="flex-row gap-2 items-center">
-                <Ionicons name="person-outline" size={24} color="white" />
+                <Ionicons
+                  name="person-outline"
+                  size={24}
+                  color={color.iconColor}
+                />
                 <Text className="font-semibold text-xl text-white">
                   Customer Information
                 </Text>
               </View>
 
-              <Pressable onPress={() => setShowCustomerModal(true)}>
-                <AntDesign name="user-switch" size={24} color="white" />
+              {selectedCustomer && (
+                <Pressable onPress={() => setShowCustomerModal(true)}>
+                  <AntDesign name="user-switch" size={24} color="white" />
+                </Pressable>
+              )}
+            </View>
+            {!selectedCustomer ? (
+              <Pressable
+                className="py-3 w-full rounded-[8px] bg-blue"
+                onPress={() => setShowCustomerModal(true)}
+              >
+                <Text className="font-semibold text-base  text-center text-white">
+                  Add Customer
+                </Text>
               </Pressable>
-            </View>
+            ) : (
+              <View className="flex-row gap-4 items-center">
+                <Image
+                  source={images.avt_placeholder}
+                  className="size-[65px] rounded-full"
+                />
 
-            <View className="flex-row gap-4 items-center">
-              <Image
-                source={images.avt_placeholder}
-                className="size-[65px] rounded-full"
-              />
-
-              <View>
-                <Text className="font-medium text-xl text-white">
-                  {selectedCustomer.name}
-                </Text>
-                <Text className="text-secondary text-base">
-                  {selectedCustomer.phone}
-                </Text>
-                <Text className="text-secondary text-base">
-                  {selectedCustomer.email}
-                </Text>
+                <View>
+                  <Text className="font-medium text-xl text-white">
+                    {selectedCustomer?.fullName}
+                  </Text>
+                  <Text className="text-secondary text-base">
+                    {selectedCustomer.phone}
+                  </Text>
+                  <Text className="text-secondary text-base">
+                    {selectedCustomer.email}
+                  </Text>
+                </View>
               </View>
-            </View>
+            )}
           </View>
 
           <CustomerPickerModal
             visible={showCustomerModal}
-            customers={customers}
+            customers={cdata}
             onClose={() => setShowCustomerModal(false)}
             onSelect={(customer) => {
-              setSelectedCustomer(customer);
+              setSelectedCustomer({
+                fullName: customer.fullName,
+                phone: customer.phone,
+                email: customer.email,
+              });
+
+              setForm((prev: any) => ({
+                ...prev,
+                customerID: customer.id,
+              }));
+
               setShowCustomerModal(false);
             }}
           />
+
           {/* Vehicle info */}
           <View className="p-[15px] bg-gray rounded-[10px]">
             <View className="flex-row justify-between mb-5">
@@ -148,7 +222,7 @@ const CreateAppointment = () => {
             </View>
             <View className="gap-5">
               <Image
-                source={{ uri: vehicleDetail?.img }}
+                source={{ uri: vdetail?.imageURL }}
                 resizeMode="cover"
                 className="w-full h-[250px] rounded-[10px]"
               />
@@ -159,7 +233,7 @@ const CreateAppointment = () => {
                     Model
                   </Text>
                   <Text className="font-semibold text-white text-xl">
-                    {vehicleDetail.model}
+                    {vdetail?.model}
                   </Text>
                 </View>
                 {/* Specs */}
@@ -171,31 +245,31 @@ const CreateAppointment = () => {
                     <View className="flex-row justify-between">
                       <CustomModelSpecs
                         label="Peak Power"
-                        value={`${vehicleDetail.maxDistance}`}
+                        value={`${vdetail?.features.motor}`}
                       />
                       <CustomModelSpecs
                         label="Total Seats"
-                        value={`${vehicleDetail.seat} seats`}
+                        value={`${vdetail?.features.seats} seats`}
                       />
                       <CustomModelSpecs
                         label="Battery"
-                        value={`${vehicleDetail.stock}`}
+                        value={`${vdetail?.features.battery}`}
                       />
                       <CustomModelSpecs
                         label="Drivetrain"
-                        value={`${vehicleDetail.drivetrain}`}
+                        value={`${vdetail?.features.drivetrain}`}
                       />
                     </View>
                   </View>
                 </View>
                 {/* Color */}
                 <View className="flex-row gap-[50px]">
-                  <View className="gap-1">
+                  <View className="gap-1 ">
                     <Text className="font-medium text-base text-secondary">
                       Model Color
                     </Text>
                     <Text className="font-semibold text-white text-xl">
-                      {vehicleDetail.color}
+                      {vdetail?.color}
                     </Text>
                   </View>
                   <View className="gap-1">
@@ -203,7 +277,7 @@ const CreateAppointment = () => {
                       Model Variant
                     </Text>
                     <Text className="font-semibold text-white text-xl">
-                      {vehicleDetail.variant}
+                      {vdetail?.version}
                     </Text>
                   </View>
                 </View>
@@ -227,8 +301,13 @@ const CreateAppointment = () => {
             </View>
             {/* Body */}
             <View className="gap-5">
-              <DateTimeInput />
-              <View className="gap-2 flex-1">
+              <DateTimeInput
+                onChangeDate={(dateStr) =>
+                  setForm((prev) => ({ ...prev, appointedDate: dateStr }))
+                }
+              />
+
+              {/* <View className="gap-2">
                 <Text className="font-medium text-base text-secondary">
                   Test Drive Location
                 </Text>
@@ -243,7 +322,7 @@ const CreateAppointment = () => {
                   </View>
                   <Ionicons name="location-outline" size={24} color="white" />
                 </View>
-              </View>
+              </View> */}
             </View>
           </View>
 
@@ -267,9 +346,6 @@ const CreateAppointment = () => {
             <View className="bg-dark">
               <TextInput
                 multiline
-                autoCapitalize="none"
-                numberOfLines={6}
-                autoCorrect={false}
                 placeholder="Write something..."
                 placeholderTextColor="#959CA7"
                 textAlignVertical="top"
@@ -280,16 +356,22 @@ const CreateAppointment = () => {
                   paddingVertical: 10,
                   lineHeight: 20,
                 }}
+                value={form.note}
+                onChangeText={(text) =>
+                  setForm((prev) => ({ ...prev, note: text }))
+                }
               />
             </View>
           </View>
           <View className="mt-5">
-            <CustomButton
-              btnStyles="bg-blue"
-              textStyles="text-white"
-              title="Confirm & Send"
-              onPress={() => {}}
-            />
+            <Pressable
+              className="py-3 w-full rounded-[8px] bg-blue"
+              onPress={handleCreateAppointment}
+            >
+              <Text className="font-semibold text-base  text-center text-white">
+                Confirm & Send
+              </Text>
+            </Pressable>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

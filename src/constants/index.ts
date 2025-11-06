@@ -19,4 +19,5 @@ export const ENDPOINTS = {
   customers: `${BASE_URL}/customers`,
   quotations: `${BASE_URL}/quotations`,
   orders: `${BASE_URL}/orders`,
+  vouchers: `${BASE_URL}/vouchers`,
 };

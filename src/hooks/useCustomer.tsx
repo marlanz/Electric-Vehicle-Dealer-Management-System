@@ -2,8 +2,16 @@ import axios from "axios";
 import { useCallback, useState } from "react";
 import { ENDPOINTS } from "../constants";
 
-interface Customer {
+export interface Customer {
   id: string;
+  fullName: string;
+  phone: string;
+  email: string;
+  address: string;
+  createdAt: string;
+}
+
+interface CreateCustomerProps {
   fullName: string;
   phone: string;
   email: string;
@@ -39,7 +47,41 @@ const useCustomer = () => {
       setLoading(false);
     }
   }, []);
-  return { fetchAllCustomers, fetchCustomerDetail, cdata, loading, cdetail };
+
+  const createCustomer = useCallback(async (body: CreateCustomerProps) => {
+    setLoading(true);
+    try {
+      const response = await axios.post(`${ENDPOINTS.customers}`, body);
+      if (response.status === 201) return true;
+      // setCdetail(response.data);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const deleteCustomer = useCallback(async (id: string) => {
+    setLoading(true);
+    try {
+      const response = await axios.delete(`${ENDPOINTS.customers}/${id}`);
+      if (response.status === 200) return true;
+      // setCdetail(response.data);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  return {
+    fetchAllCustomers,
+    fetchCustomerDetail,
+    createCustomer,
+    deleteCustomer,
+    cdata,
+    loading,
+    cdetail,
+  };
 };
 
 export default useCustomer;

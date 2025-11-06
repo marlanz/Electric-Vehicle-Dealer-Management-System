@@ -1,13 +1,16 @@
+import { Customer } from "@/src/hooks/useCustomer";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { FlatList, Modal, Text, TouchableOpacity, View } from "react-native";
+import {
+  FlatList,
+  Modal,
+  Pressable,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import CustomButton from "./CustomButton";
-
-interface Customer {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-}
+import CustomDivider from "./CustomDivider";
 
 interface Props {
   visible: boolean;
@@ -26,20 +29,23 @@ const CustomerPickerModal = ({
     <Modal visible={visible} transparent animationType="slide">
       <View className="flex-1 bg-black/60 justify-end">
         <View className="bg-dark p-5 rounded-t-2xl max-h-[60%]">
-          <Text className="text-white font-semibold text-xl mb-4">
-            Select Customer
-          </Text>
+          <View className="flex-row justify-between">
+            <Text className="text-white font-semibold text-xl mb-4">
+              Select Customer
+            </Text>
+            <Pressable onPress={onClose}>
+              <Ionicons name="close-outline" size={24} color={"white"} />
+            </Pressable>
+          </View>
 
           <FlatList
             data={customers}
             keyExtractor={(item) => item.id}
+            ItemSeparatorComponent={() => <CustomDivider />}
             renderItem={({ item }) => (
-              <TouchableOpacity
-                className="p-4 border-b border-gray-700"
-                onPress={() => onSelect(item)}
-              >
+              <TouchableOpacity className="p-4 " onPress={() => onSelect(item)}>
                 <Text className="text-white font-semibold text-lg">
-                  {item.name}
+                  {item.fullName}
                 </Text>
                 <Text className="text-secondary">{item.phone}</Text>
                 <Text className="text-secondary">{item.email}</Text>
@@ -51,7 +57,7 @@ const CustomerPickerModal = ({
             title="Close"
             btnStyles="mt-3 bg-gray-700"
             onPress={onClose}
-            textStyles="text-white"
+            textStyles="text-white-100"
           />
         </View>
       </View>
